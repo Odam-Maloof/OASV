@@ -1,0 +1,191 @@
+/* Widget area background color */
+QWidget#window {
+    background-image: url("images/grad_rectangle_1920x1080.png");
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Title bar styles */
+QLabel#custom_title_bar {
+    background-color: black;
+    color: white;
+}
+
+QLabel#close_button {
+    background-color: black;
+}
+
+QLabel#close_button::hover {
+    background-color: #2f2f2f;
+}
+
+QLabel#maxi_button {
+    background-color: black;
+}
+
+QLabel#maxi_button::hover {
+    background-color: #2f2f2f;
+}
+
+QLabel#mini_button {
+    background-color: black;
+}
+
+QLabel#mini_button::hover {
+    background-color: #2f2f2f;
+}
+
+/* settings button and menu */
+QLabel#setting_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#setting_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* upload button and menu */
+
+QLabel#import_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#import_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* full screen button */
+QLabel#full_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#full_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* three playback buttons */
+QLabel#start_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#start_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+QLabel#play_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#play_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+QLabel#end_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#end_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* placeholder audiovisualiser */
+QLabel#bar_1 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_2 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_3 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_4 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_5 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_6 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_7 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_8 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_9 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_10 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_11 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_12 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_13 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_14 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_15 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_16 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_17 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_18 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_19 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+QLabel#bar_20 {
+    background-color: #FF7500;
+    border-radius: 6px;
+}
+
+/* text on the left side */
+QLabel#song_name {
+    color: white;
+    font-size: 50px;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+QLabel#artist_name {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 20px;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
