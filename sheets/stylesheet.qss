@@ -16,7 +16,7 @@ QLabel#close_button {
 }
 
 QLabel#close_button::hover {
-    background-color: #2f2f2f;
+    background-color: red;
 }
 
 QLabel#maxi_button {
@@ -53,6 +53,48 @@ QLabel#import_button {
 }
 
 QLabel#import_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* info button and menu */
+QLabel#info_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#info_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+QLabel#info_menu {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#info_menu_title {
+    color: white;
+    font-size: 40px;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+QLabel#info_paras {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 20px;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+QLabel#info_close_button {
+    color: white;
+    font-family: 'Segoe UI';
+    font-size: 20px;
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#info_close_button::hover {
     background-color: rgba(255, 255, 255, 0.4);
 }
 
@@ -95,84 +137,8 @@ QLabel#end_button::hover {
 }
 
 /* placeholder audiovisualiser */
-QLabel#bar_1 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_2 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_3 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_4 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_5 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_6 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_7 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_8 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_9 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_10 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_11 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_12 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_13 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_14 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_15 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_16 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_17 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_18 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_19 {
-    background-color: #FF7500;
-    border-radius: 6px;
-}
-QLabel#bar_20 {
-    background-color: #FF7500;
+QLabel#bar_ {
+    background-color: rgba(255, 117, 0, 1);
     border-radius: 6px;
 }
 
