@@ -6,10 +6,33 @@ from PyQt5.QtCore import *
 # make labels clickable with this class
 class ClickableLabel(QLabel):
     clicked = pyqtSignal()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMouseTracking(True)
 
     def mousePressEvent(self, event):
         self.clicked.emit()
+        self.setStyleSheet("background-color: rgba(255, 255, 255, 0.1);")
         QLabel.mousePressEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        self.setStyleSheet("")  # Remove the pressed state styles
+        QLabel.mouseReleaseEvent(self, event)
+
+class SpecialClickableLabel(QLabel):
+    clicked = pyqtSignal()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMouseTracking(True)
+
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+        self.setStyleSheet("background-color: #cc5d00;")
+        QLabel.mousePressEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        self.setStyleSheet("")  # Remove the pressed state styles
+        QLabel.mouseReleaseEvent(self, event)
 
 # define the functions that are part of the program
 first_run = True
@@ -39,10 +62,10 @@ def fullscreen_mode():
         start_button.move(842, lower_button_loc)
         play_button.move(924, lower_button_loc)
         end_button.move(1006, lower_button_loc)
-        title_bar.resize(title_bar_width, 30)
-        mini_button.resize(36, 30)
-        maxi_button.resize(36, 30)
-        close_button.resize(36, 30)
+        title_bar.resize(title_bar_width, title_bar_height)
+        mini_button.resize(title_button_width, title_bar_height)
+        maxi_button.resize(title_button_width, title_bar_height)
+        close_button.resize(title_button_width, title_bar_height)
         full_button.move(full_button_loc, 56)
         full_button.setPixmap(expand_2)
         setting_button.move(56,56)
@@ -64,12 +87,12 @@ def maximised_mode():
         print('what')
 
 def open_info_menu():
-    info_menu.resize(664, 694)
-    info_menu_title.resize(361, 53)
-    info_desc_para.resize(624, 140)
-    info_instr_para.resize(624, 140)
-    info_noti_para.resize(624, 140)
-    info_close_button.resize(242, 40)
+    info_menu.resize(i_m_w, i_m_h)
+    info_menu_title.resize(i_m_t_w, i_m_t_h)
+    info_desc_para.resize(i_p_w, i_p_h)
+    info_instr_para.resize(i_p_w, i_p_h)
+    info_noti_para.resize(i_p_w, i_p_h)
+    info_close_button.resize(i_c_b_w, i_c_b_h)
     label_list = window.findChildren(QLabel, "bar_")
     for label in label_list:
             label.setStyleSheet("background-color: rgba(255, 117, 0, 0.1);")
@@ -84,6 +107,7 @@ def close_info_menu():
     label_list = window.findChildren(QLabel, "bar_")
     for label in label_list:
             label.setStyleSheet("background-color: rgba(255, 117, 0, 1);")
+
     
 
 # keep GUI running
@@ -102,14 +126,17 @@ if __name__ == '__main__':
     title_bar.setObjectName('custom_title_bar')
     title_bar.move(0, 0)
     title_bar_width = int(window.width()) - 108
-    title_bar.resize(title_bar_width, 30)
+    title_bar_height = 30
+    title_bar.resize(title_bar_width, title_bar_height)
     # variable for title bar buttons placement
     title_button_loc = window.width() - 108
+    # variable for the width of title bar buttons
+    title_button_width = 36
     # add the minimise button
     mini_button = ClickableLabel(window)
     mini_button.setObjectName('mini_button')
     mini_button.move(title_button_loc, 0)
-    mini_button.resize(36, 30)
+    mini_button.resize(title_button_width, title_bar_height)
     dash = QPixmap('images/subtract-line.png')
     dash_2 = dash.scaled(16, 16)
     mini_button.setPixmap(dash_2)
@@ -121,7 +148,7 @@ if __name__ == '__main__':
     maxi_button = ClickableLabel(window)
     maxi_button.setObjectName('maxi_button')
     maxi_button.move(title_button_loc, 0)
-    maxi_button.resize(36, 30)
+    maxi_button.resize(title_button_width, title_bar_height)
     square = QPixmap('images/checkbox-blank-line-2.png')
     square_2 = square.scaled(13, 13)
     maxi_button.setPixmap(square_2)
@@ -133,115 +160,176 @@ if __name__ == '__main__':
     close_button = ClickableLabel(window)
     close_button.setObjectName('close_button')
     close_button.move(title_button_loc, 0)
-    close_button.resize(36, 30)
+    close_button.resize(title_button_width, title_bar_height)
     cross = QPixmap('images/close-line.png')
     close_button.setPixmap(cross)
     close_button.setAlignment(Qt.AlignCenter)
     close_button.clicked.connect(window.close)
 
+    # variables for button size and location
+    # n_b = normal buttons, w/h is width/height
+    n_b_w = 72
+    n_b_h = 40
+    n_b_y = 56
+    settings_x = 56
+    import_x = 144
+    info_x = 232
+
     # add the settings button
     setting_button = ClickableLabel(window)
     setting_button.setObjectName('setting_button')
-    setting_button.move(56, 56)
-    setting_button.resize(72, 40)
+    setting_button.move(settings_x, n_b_y)
+    setting_button.resize(n_b_w, n_b_h)
     gear = QPixmap('images/settings-4-line.png')
     gear_2 = gear.scaled(24,24)
     setting_button.setPixmap(gear_2)
     setting_button.setAlignment(Qt.AlignCenter)
     # setting_button.clicked.connect(window.close)
+    setting_button.setToolTip('Settings')
 
     # add the import button
     import_button = ClickableLabel(window)
     import_button.setObjectName('import_button')
-    import_button.move(144, 56)
-    import_button.resize(72, 40)
+    import_button.move(import_x, n_b_y)
+    import_button.resize(n_b_w, n_b_h)
     upload = QPixmap('images/upload-2-line.png')
     upload_2 = upload.scaled(24,24)
     import_button.setPixmap(upload_2)
     import_button.setAlignment(Qt.AlignCenter)
+    import_button.setToolTip('Import')
 
     # add the info button
     info_button = ClickableLabel(window)
     info_button.setObjectName('info_button')
-    info_button.move(232, 56)
-    info_button.resize(72, 40)
+    info_button.move(info_x, n_b_y)
+    info_button.resize(n_b_w, n_b_h)
     upload = QPixmap('images/information-line.png')
     upload_2 = upload.scaled(24,24)
     info_button.setPixmap(upload_2)
     info_button.setAlignment(Qt.AlignCenter)
     info_button.clicked.connect(open_info_menu)
+    info_button.setToolTip('Info & Help')
 
     # add the fullscreen button
     full_button = ClickableLabel(window)
     full_button.setObjectName('import_button')
     full_button_loc = window.width() - 128
-    full_button.move(full_button_loc, 56)
-    full_button.resize(72, 40)
+    full_button.move(full_button_loc, n_b_y)
+    full_button.resize(n_b_w, n_b_h)
     expand = QPixmap('images/fullscreen-line.png')
     expand_2 = expand.scaled(24,24)
     full_button.setPixmap(expand_2)
     full_button.setAlignment(Qt.AlignCenter)
     full_button.clicked.connect(fullscreen_mode)
+    full_button.setToolTip('Fullscreen')
 
     # add the three playback buttons
     lower_button_loc = window.height() - 98
+    start_x = 842
+    play_x = 924
+    end_x = 1006
     # start button
     start_button = ClickableLabel(window)
     start_button.setObjectName('start_button')
-    start_button.move(842, lower_button_loc)
-    start_button.resize(72, 40)
+    start_button.move(start_x, lower_button_loc)
+    start_button.resize(n_b_w, n_b_h)
     start = QPixmap('images/skip-back-line.png')
     start_2 = start.scaled(24,24)
     start_button.setPixmap(start_2)
     start_button.setAlignment(Qt.AlignCenter)
+    start_button.setToolTip('Start')
     # play button
     play_button = ClickableLabel(window)
     play_button.setObjectName('play_button')
-    play_button.move(924, lower_button_loc)
-    play_button.resize(72, 40)
+    play_button.move(play_x, lower_button_loc)
+    play_button.resize(n_b_w, n_b_h)
     play = QPixmap('images/play-line.png')
     play_2 = play.scaled(24,24)
     play_button.setPixmap(play_2)
     play_button.setAlignment(Qt.AlignCenter)
+    play_button.setToolTip('Play')
     # end button
     end_button = ClickableLabel(window)
     end_button.setObjectName('end_button')
-    end_button.move(1006, lower_button_loc)
-    end_button.resize(72, 40)
+    end_button.move(end_x, lower_button_loc)
+    end_button.resize(n_b_w, n_b_h)
     end = QPixmap('images/skip-forward-line.png')
     end_2 = end.scaled(24,24)
     end_button.setPixmap(end_2)
     end_button.setAlignment(Qt.AlignCenter)
+    end_button.setToolTip('End')
 
     # add the placeholder paused visual
-    bar_loc = 656
+    bar_x = 656
+    bar_y = 534
+    bar_dimension = 12
+    bar_gap = 32
     for i in range(1, 21):
         bar = QLabel(window)
         bar.setObjectName('bar_')
-        bar.move(bar_loc, 534)
-        bar.resize(12, 12)
-        bar_loc += 32
+        bar.move(bar_x, bar_y)
+        bar.resize(bar_dimension, bar_dimension)
+        bar_x += bar_gap
 
     # add text on left hand side
+    # variables
+    song_x = 56
+    song_y = 489
+    song_w = 264
+    song_h = 67
+    artist_x = 56
+    artist_y = 564
+    artist_w = 110
+    artist_h = 27
     song_name = QLabel('Song name', window)
     song_name.setObjectName('song_name')
-    song_name.move(56, 489)
-    song_name.resize(264, 67)
+    song_name.move(song_x, song_y)
+    song_name.resize(song_w, song_h)
     artist_name = QLabel('Artist name', window)
     artist_name.setObjectName('artist_name')
-    artist_name.move(56, 564)
-    artist_name.resize(110, 27)
+    artist_name.move(artist_x, artist_y)
+    artist_name.resize(artist_w, artist_h)
 
     # the menus
     # info menu
+    # variables of scaled menu
+    '''
+    to make names shorter these are the conventions:
+    i_m = info menu
+    _w = width
+    _h = height
+    _p_ = identifier for a specific component, such as paragraph
+    '''
+    i_m_w = 664
+    i_m_h = 694
+    i_m_t_w = 361
+    i_m_t_h = 53
+    i_p_w = 624
+    i_p_h = 140
+    i_c_b_w = 242
+    i_c_b_h = 40
+    i_m_x = 635
+    i_m_y = 186
+    i_m_t_x = 787
+    i_m_t_y = 236
+    i_d_p_x = 710
+    i_d_p_y = 309
+    i_i_p_x = 710
+    i_i_p_y = 469
+    i_n_p_x = 710
+    i_n_p_y = 589
+    i_c_b_x = 836
+    i_c_b_y = 790
+
+    # menu components
     info_menu = QLabel('', window)
     info_menu.setObjectName('info_menu')
-    info_menu.move(628, 186)    
+    info_menu.move(i_m_x, i_m_y)    
     info_menu.resize(0, 0)
 
     info_menu_title = QLabel('Welcome to OA/SV', window)
     info_menu_title.setObjectName('info_menu_title')
-    info_menu_title.move(780, 236)
+    info_menu_title.move(i_m_t_x, i_m_t_y)
     info_menu_title.resize(0, 0)
     
     info_desc_para = QLabel('Odams Audio/Sound Visualiser is an app which takes'
@@ -250,7 +338,7 @@ if __name__ == '__main__':
                             '\nfriendliness in mind, so give it a go and play your'
                             '\nfavourite song today.', window)
     info_desc_para.setObjectName('info_paras')
-    info_desc_para.move(703, 309)
+    info_desc_para.move(i_d_p_x, i_d_p_y)
     info_desc_para.resize(0, 0)
 
     info_instr_para = QLabel('Instructions:'
@@ -259,22 +347,24 @@ if __name__ == '__main__':
                             '\n3. Allow the program to process the audio file'
                             '\n4. Once it\'s done, press play', window)
     info_instr_para.setObjectName('info_paras')
-    info_instr_para.move(703, 469)
+    info_instr_para.move(i_i_p_x, i_i_p_y)
     info_instr_para.resize(0, 0)
 
     info_noti_para = QLabel('You can access this menu again at any time by'
                             '\npressing the "i" icon in the top left corner'
                             , window)
     info_noti_para.setObjectName('info_paras')
-    info_noti_para.move(703, 589)
+    info_noti_para.move(i_n_p_x, i_n_p_y)
     info_noti_para.resize(0, 0)
 
-    info_close_button = ClickableLabel('Close', window)
+    info_close_button = ClickableLabel(window)
+    info_close_button.setText('Close')
     info_close_button.setObjectName('info_close_button')
-    info_close_button.move(829, 790)
+    info_close_button.move(836, 790)
     info_close_button.resize(0, 0)
     info_close_button.setAlignment(Qt.AlignCenter)
     info_close_button.clicked.connect(close_info_menu)
+    info_close_button.setToolTip('Close')
 
     # Load the external stylesheet
     with open('sheets/stylesheet.qss', 'r') as file:

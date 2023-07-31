@@ -108,6 +108,102 @@ QLabel#full_button::hover {
     background-color: rgba(255, 255, 255, 0.4);
 }
 
+/* scale button and menu */
+QLabel#scale_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#scale_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+QLabel#scaling_menu {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#scaling_menu_sub {
+    color: white;
+    font-size: 30px;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+QLabel#scaling_labels {
+    color: white;
+    font-size: 20px;
+    font-family: 'Segoe UI';
+}
+
+QLineEdit#scaling_box {
+    color: white;
+    font-size: 16px;
+    font-family: 'Segoe UI';
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+}
+
+QComboBox#resolution_box {
+    color: white;
+    font-size: 16px;
+    font-family: 'Segoe UI';
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px; 
+}
+QComboBox::down-arrow {
+    image: url(images/arrow-down-s-line.png);
+    width: 18px;
+    height: 18px;
+    margin: auto;
+}
+QComboBox#resolution_box::drop-down { 
+    border-top-right-radius: 10px; 
+    border-bottom-right-radius: 10px; 
+    background-color: rgba(255, 255, 255, 0.2);
+    }
+
+QComboBox::item {
+    color: red;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+QLabel#preset_buttons {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+QLabel#preset_buttons::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+QLabel#close_set_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 17px;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: 'Segoe UI';
+}
+
+QLabel#close_set_button::hover {
+    background-color: rgba(255, 255, 255, 0.4)
+}
+
+QLabel#set_button {
+    background-color: #FF7501;
+    border-radius: 17px;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: 'Segoe UI';
+}
+
+QLabel#set_button::hover {
+    background-color: #ff9033;
+}
+
 /* three playback buttons */
 QLabel#start_button {
     background-color: rgba(255, 255, 255, 0.2);
