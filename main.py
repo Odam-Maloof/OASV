@@ -1,7 +1,12 @@
 import sys
+import os
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from mutagen.mp3 import MP3
+from mutagen.flac import FLAC
+from mutagen.wave import WAVE
+from mutagen.aac import AAC
 
 # make labels clickable with this class
 class ClickableLabel(QLabel):
@@ -28,6 +33,22 @@ class SpecialClickableLabel(QLabel):
     def mousePressEvent(self, event):
         self.clicked.emit()
         self.setStyleSheet("background-color: #cc5d00;")
+        QLabel.mousePressEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        self.setStyleSheet("")  # Remove the pressed state styles
+        QLabel.mouseReleaseEvent(self, event)
+
+class UploadBox(QLabel):
+    clicked = pyqtSignal()
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMouseTracking(True)
+
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+        '''self.setStyleSheet("background-color: rgba(255, 255, 255, 0);"
+                           "border: 2px dashed rgba(255, 255, 255, 0.5); ")'''
         QLabel.mousePressEvent(self, event)
 
     def mouseReleaseEvent(self, event):
@@ -108,6 +129,114 @@ def close_info_menu():
     for label in label_list:
             label.setStyleSheet("background-color: rgba(255, 117, 0, 1);")
 
+def open_upload_menu():
+    upload_menu.resize(u_m_w, u_m_h)
+    upl_menu_title.resize(u_m_t_w, u_m_t_h)
+    upl_box.resize(u_b_w, u_b_h)
+    upl_img.resize(u_i_w, u_i_h)
+    upl_text.resize(u_t_w, u_t_h)
+    upl_close_button.resize(u_bu_w, u_bu_h)
+    upl_cont_button.resize(u_bu_w, u_bu_h)
+    label_list = window.findChildren(QLabel, "bar_")
+    for label in label_list:
+            label.setStyleSheet("background-color: rgba(255, 117, 0, 0.1);")
+
+def close_upload_menu():
+    upload_menu.resize(0, 0)
+    upl_menu_title.resize(0, 0)
+    upl_box.resize(0, 0)
+    upl_img.resize(0, 0)
+    upl_text.resize(0, 0)
+    upl_close_button.resize(0, 0)
+    upl_cont_button.resize(0, 0)
+    upl_file_box.resize(0, 0)
+    upl_music_icon.resize(0, 0)
+    upl_cancel_icon.resize(0, 0)
+    upl_file_title.resize(0, 0)
+    upl_file_subtitle.resize(0, 0)
+    label_list = window.findChildren(QLabel, "bar_")
+    for label in label_list:
+            label.setStyleSheet("background-color: rgba(255, 117, 0, 1);")
+    file_uploaded = False
+
+def upload_audio():
+    # Open a file dialog to select an image file
+    global file_name
+    file_name, a = QFileDialog.getOpenFileName(window, 'Open Image', '.', 'Image Files (*.mp3 *.wav *.aac *.flac)')
+    if file_name:
+            file_name_pathless = os.path.basename(file_name)
+            artist, song = get_song_info(file_name_pathless)
+            bytes_value = os.path.getsize(file_name)
+            file_size = convert_bytes_to_megabytes(bytes_value)
+            audio_length = get_audio_length(file_name)
+            audio_length_min_sec = convert_seconds_to_minutes_seconds(audio_length)
+            display_file(artist, song)
+
+def get_song_info(file_name):
+    parts = file_name.split("-")
+    if len(parts) >= 2:
+        artist = parts[0].strip()  # Remove leading and trailing spaces
+        song = parts[1].strip().rstrip(".mp3")      # Remove leading and trailing spaces
+        if len(song) > 18:
+            trimmed_song = song[:15] + "..."
+        else:
+            trimmed_song = song
+        song = trimmed_song
+        return artist, song
+    else:
+        # If the file name does not follow the expected format, return None for both song name and artist
+        return None, None
+    
+
+def convert_bytes_to_megabytes(bytes_value):
+    return bytes_value / (1024 * 1024)
+
+def get_audio_length(file_name):
+    try:
+        audio = None
+        if file_name.lower().endswith('.mp3'):
+            audio = MP3(file_name)
+        elif file_name.lower().endswith('.flac'):
+            audio = FLAC(file_name)
+        elif file_name.lower().endswith('.wav'):
+            audio = WAVE(file_name)
+        elif file_name.lower().endswith('.aac'):
+            audio = AAC(file_name)
+
+        if audio is not None:
+            return audio.info.length
+    except Exception as e:
+        print("Error:", e)
+
+    return 0.0
+def convert_seconds_to_minutes_seconds(audio_length):
+    minutes = int(audio_length // 60)
+    remaining_seconds = int(audio_length % 60)
+    return f"{minutes:02d}:{remaining_seconds:02d}"
+
+def display_file(artist, song):
+    upl_box.resize(0, 0)
+    upl_img.resize(0, 0)
+    upl_text.resize(0, 0)
+    upl_file_box.resize(u_f_b_w, u_f_b_h)
+    upl_music_icon.resize(u_m_i_w, u_m_i_h)
+    upl_cancel_icon.resize(u_c_i_w, u_c_i_h)
+    upl_file_title.resize(u_f_tx_w, u_f_t_h)
+    upl_file_subtitle.resize(u_f_tx_w, u_f_st_h)
+    upl_file_title.setText(song)
+    upl_file_subtitle.setText(artist)
+    file_uploaded = True
+
+def cancel_display_file():
+    upl_box.resize(u_b_w, u_b_h)
+    upl_img.resize(u_i_w, u_i_h)
+    upl_text.resize(u_t_w, u_t_h)
+    upl_file_box.resize(0, 0)
+    upl_music_icon.resize(0, 0)
+    upl_cancel_icon.resize(0, 0)
+    upl_file_title.resize(0, 0)
+    upl_file_subtitle.resize(0, 0)
+    file_uploaded = False
     
 
 # keep GUI running
@@ -197,6 +326,7 @@ if __name__ == '__main__':
     import_button.setPixmap(upload_2)
     import_button.setAlignment(Qt.AlignCenter)
     import_button.setToolTip('Import')
+    import_button.clicked.connect(open_upload_menu)
 
     # add the info button
     info_button = ClickableLabel(window)
@@ -365,6 +495,137 @@ if __name__ == '__main__':
     info_close_button.setAlignment(Qt.AlignCenter)
     info_close_button.clicked.connect(close_info_menu)
     info_close_button.setToolTip('Close')
+
+    # upload components
+    # numbers
+    u_m_x = 629
+    u_m_y = 194
+    u_m_w = 663
+    u_m_h = 693
+    u_m_t_x = 853
+    u_m_t_y = 237
+    u_m_t_w = 215
+    u_m_t_h = 53
+    u_b_x = 700
+    u_b_y = 350
+    u_b_w = 520
+    u_b_h = 380
+    u_i_x = 906
+    u_i_y = 458
+    u_i_w = 109
+    u_i_h = 99
+    u_t_x = 765
+    u_t_y = 585
+    u_t_w = 390
+    u_t_h = 37
+    u_cl_b_x = 679
+    u_bu_y = 790
+    u_bu_w = 262
+    u_bu_h = 40
+    u_co_b_x = 980
+
+    upload_menu = QLabel('', window)
+    upload_menu.setObjectName('upload_menu')
+    upload_menu.move(u_m_x, u_m_y)    
+    upload_menu.resize(0, 0)
+
+    upl_menu_title = QLabel('Select a file', window)
+    upl_menu_title.setObjectName('upl_menu_title')
+    upl_menu_title.move(u_m_t_x, u_m_t_y)
+    upl_menu_title.resize(0, 0)
+
+    upl_box = UploadBox(window)
+    upl_box.setObjectName('upl_box')
+    upl_box.move(u_b_x, u_b_y)
+    upl_box.resize(0, 0)
+    upl_box.clicked.connect(upload_audio)
+
+    upl_img = QLabel('', window)
+    upload_icon = QPixmap('images/upload-line.png')
+    upload_icon_2 = upload_icon.scaled(109,99)
+    upl_img.setPixmap(upload_icon_2)
+    upl_img.setAlignment(Qt.AlignCenter)
+    upl_img.setObjectName('upl_img')
+    upl_img.move(u_i_x, u_i_y)
+    upl_img.resize(0, 0)
+    
+    upl_text = QLabel('Drag file here or click to upload', window)
+    upl_text.setObjectName('upl_text')
+    upl_text.move(u_t_x, u_t_y)
+    upl_text.resize(0, 0)
+    
+    upl_close_button = ClickableLabel(window)
+    upl_close_button.setObjectName('upl_close_button')
+    upl_close_button.setText('Close')
+    upl_close_button.move(u_cl_b_x, u_bu_y)
+    upl_close_button.setAlignment(Qt.AlignCenter)
+    upl_close_button.resize(0, 0)
+    upl_close_button.clicked.connect(close_upload_menu)
+
+    upl_cont_button = SpecialClickableLabel(window)
+    upl_cont_button.setObjectName('upl_cont_button')
+    upl_cont_button.setText('Continue')
+    upl_cont_button.setAlignment(Qt.AlignCenter)
+    upl_cont_button.move(u_co_b_x, u_bu_y)
+    upl_cont_button.resize(0, 0)
+
+    u_f_b_x = 700
+    u_f_b_y = 490
+    u_f_b_w = 520
+    u_f_b_h = 100
+    u_m_i_x = 724
+    u_m_i_y = 523
+    u_m_i_w = 34
+    u_m_i_h = 34
+    u_c_i_x = 1164
+    u_c_i_y = 520
+    u_c_i_w = 40
+    u_c_i_h = 40
+    u_f_t_x = 772
+    u_f_t_y = 506
+    u_f_tx_w = 300
+    u_f_t_h = 40
+    u_f_st_x = 772
+    u_f_st_y = 539
+    u_f_st_h = 27
+
+
+    upl_file_box = QLabel(window)
+    upl_file_box.setObjectName('upl_file_box')
+    upl_file_box.move(u_f_b_x, u_f_b_y)
+    upl_file_box.resize(0, 0)
+
+    upl_music_icon = QLabel('', window)
+    music_icon = QPixmap('images/music-2-line.png')
+    music_icon_2 = music_icon.scaled(32,32)
+    upl_music_icon.setPixmap(music_icon_2)
+    upl_music_icon.setAlignment(Qt.AlignCenter)
+    upl_music_icon.setObjectName('upl_icon')
+    upl_music_icon.move(u_m_i_x, u_m_i_y)
+    upl_music_icon.resize(0, 0)
+
+    upl_cancel_icon = ClickableLabel(window)
+    cancel_icon = QPixmap('images/close-circle-line.png')
+    cancel_icon_2 = cancel_icon.scaled(32,32)
+    upl_cancel_icon.setPixmap(cancel_icon_2)
+    upl_cancel_icon.setAlignment(Qt.AlignCenter)
+    upl_cancel_icon.setObjectName('upl_cancel_icon')
+    upl_cancel_icon.move(u_c_i_x, u_c_i_y)
+    upl_cancel_icon.resize(0, 0)
+    upl_cancel_icon.clicked.connect(cancel_display_file)
+
+    upl_file_title = QLabel('Song Name', window)
+    upl_file_title.setObjectName('upl_file_title')
+    upl_file_title.move(u_f_t_x, u_f_t_y)
+    upl_file_title.resize(0, 0)
+    upl_file_title.setAlignment(Qt.AlignLeft)
+
+    upl_file_subtitle = QLabel('Artist Name', window)
+    upl_file_subtitle.setObjectName('upl_file_subtitle')
+    upl_file_subtitle.move(u_f_st_x, u_f_st_y)
+    upl_file_subtitle.resize(0, 0)
+    upl_file_title.setAlignment(Qt.AlignLeft)
+
 
     # Load the external stylesheet
     with open('sheets/stylesheet.qss', 'r') as file:

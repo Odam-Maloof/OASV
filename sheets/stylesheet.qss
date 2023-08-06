@@ -204,6 +204,93 @@ QLabel#set_button::hover {
     background-color: #ff9033;
 }
 
+/* upload menu */
+QLabel#upload_menu {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+}
+
+QLabel#upl_menu_title {
+    color: white;
+    font-size: 40px;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+QLabel#upl_text {
+    color: white;
+    font-size: 28px;
+    font-family: 'Segoe UI';
+}
+
+QLabel#upl_box {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+}
+
+QLabel#upl_box::hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 2px dashed rgba(255, 255, 255, 0.4);
+}
+
+QLabel#upl_close_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 17px;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: 'Segoe UI';
+}
+
+QLabel#upl_close_button::hover {
+    background-color: rgba(255, 255, 255, 0.4)
+}
+
+QLabel#upl_cont_button {
+    background-color: #FF7501;
+    border-radius: 17px;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: 'Segoe UI';
+}
+
+QLabel#upl_cont_button::hover {
+    background-color: #ff9033;
+}
+
+
+
+
+QLabel#upl_file_box {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+}
+
+QLabel#upl_file_title {
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    font-family: 'Segoe UI';
+}
+
+QLabel#upl_file_subtitle{
+    color: white;
+    font-size: 20px;
+    font-weight: regular;
+    font-family: 'Segoe UI';
+}
+
+QLabel#upl_cancel_icon {
+    border-radius: 20px;
+}
+
+QLabel#upl_cancel_icon::hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+
 /* three playback buttons */
 QLabel#start_button {
     background-color: rgba(255, 255, 255, 0.2);
