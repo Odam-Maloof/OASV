@@ -44,16 +44,42 @@ class UploadBox(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMouseTracking(True)
+        self.setAcceptDrops(True)
 
     def mousePressEvent(self, event):
         self.clicked.emit()
-        '''self.setStyleSheet("background-color: rgba(255, 255, 255, 0);"
-                           "border: 2px dashed rgba(255, 255, 255, 0.5); ")'''
         QLabel.mousePressEvent(self, event)
 
     def mouseReleaseEvent(self, event):
         self.setStyleSheet("")  # Remove the pressed state styles
         QLabel.mouseReleaseEvent(self, event)
+
+    def dragEnterEvent(self, event):
+        # Check if the event contains URLs or file paths
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        # Check if the event contains URLs or file paths
+        if event.mimeData().hasUrls():
+            # Get the list of dropped URLs
+            urls = event.mimeData().urls()
+
+            # If you expect only audio files to be dropped, you can filter them here
+            file_url = [url for url in urls if url.toString().lower().endswith(('.mp3', '.wav', '.ogg'))]
+
+            # If there are any audio files, call the drag_audio function for it
+            if file_url:
+                for url in file_url:
+                    file_qurl = file_url[0]
+                    file_stripped = file_qurl.path()
+                    file_name = file_stripped.lstrip('/')
+                    drag_audio(file_name)
+            else:
+                print('wrong file')
+
+            event.acceptProposedAction()
+        
 
 # define the functions that are part of the program
 first_run = True
@@ -108,15 +134,18 @@ def maximised_mode():
         print('what')
 
 def open_info_menu():
-    info_menu.resize(i_m_w, i_m_h)
-    info_menu_title.resize(i_m_t_w, i_m_t_h)
-    info_desc_para.resize(i_p_w, i_p_h)
-    info_instr_para.resize(i_p_w, i_p_h)
-    info_noti_para.resize(i_p_w, i_p_h)
-    info_close_button.resize(i_c_b_w, i_c_b_h)
-    label_list = window.findChildren(QLabel, "bar_")
-    for label in label_list:
-            label.setStyleSheet("background-color: rgba(255, 117, 0, 0.1);")
+    if upload_menu.height() == 0:
+        info_menu.resize(i_m_w, i_m_h)
+        info_menu_title.resize(i_m_t_w, i_m_t_h)
+        info_desc_para.resize(i_p_w, i_p_h)
+        info_instr_para.resize(i_p_w, i_p_h)
+        info_noti_para.resize(i_p_w, i_p_h)
+        info_close_button.resize(i_c_b_w, i_c_b_h)
+        label_list = window.findChildren(QLabel, "bar_")
+        for label in label_list:
+                label.setStyleSheet("background-color: rgba(255, 117, 0, 0.1);")
+    else:
+        pass
 
 def close_info_menu():
     info_menu.resize(0, 0)
@@ -130,16 +159,19 @@ def close_info_menu():
             label.setStyleSheet("background-color: rgba(255, 117, 0, 1);")
 
 def open_upload_menu():
-    upload_menu.resize(u_m_w, u_m_h)
-    upl_menu_title.resize(u_m_t_w, u_m_t_h)
-    upl_box.resize(u_b_w, u_b_h)
-    upl_img.resize(u_i_w, u_i_h)
-    upl_text.resize(u_t_w, u_t_h)
-    upl_close_button.resize(u_bu_w, u_bu_h)
-    upl_cont_button.resize(u_bu_w, u_bu_h)
-    label_list = window.findChildren(QLabel, "bar_")
-    for label in label_list:
-            label.setStyleSheet("background-color: rgba(255, 117, 0, 0.1);")
+    if info_menu.height() == 0 and upload_menu.height() <= 1:
+        upload_menu.resize(u_m_w, u_m_h)
+        upl_menu_title.resize(u_m_t_w, u_m_t_h)
+        upl_box.resize(u_b_w, u_b_h)
+        upl_img.resize(u_i_w, u_i_h)
+        upl_text.resize(u_t_w, u_t_h)
+        upl_close_button.resize(u_bu_w, u_bu_h)
+        upl_cont_button.resize(u_bu_w, u_bu_h)
+        label_list = window.findChildren(QLabel, "bar_")
+        for label in label_list:
+                label.setStyleSheet("background-color: rgba(255, 117, 0, 0.1);")
+    else:
+        pass
 
 def close_upload_menu():
     upload_menu.resize(0, 0)
@@ -171,6 +203,15 @@ def upload_audio():
             audio_length = get_audio_length(file_name)
             audio_length_min_sec = convert_seconds_to_minutes_seconds(audio_length)
             display_file(artist, song)
+
+def drag_audio(file_name):
+        file_name_pathless = os.path.basename(file_name)
+        artist, song = get_song_info(file_name_pathless)
+        bytes_value = os.path.getsize(file_name)
+        file_size = convert_bytes_to_megabytes(bytes_value)
+        audio_length = get_audio_length(file_name)
+        audio_length_min_sec = convert_seconds_to_minutes_seconds(audio_length)
+        display_file(artist, song)
 
 def get_song_info(file_name):
     parts = file_name.split("-")
