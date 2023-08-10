@@ -290,6 +290,57 @@ QLabel#upl_cancel_icon::hover {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
+/* error message styling */
+QLabel#error_message_box {
+    background-color: #665d57;
+    border-radius: 20px;
+}
+
+QLabel#error_title {
+    color: white;
+    font-size: 30px;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+QLabel#error_text {
+    color: white;
+    font-size: 20px;
+    font-family: 'Segoe UI';
+}
+
+QLabel#details_button {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+QLabel#details_button::hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+QLabel#okay_button {
+    background-color: #FF7501;
+    border-radius: 12px;
+    color: white;
+    font-size: 14px;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+QLabel#okay_button::hover {
+    background-color: #FF9033;
+}
+
+QLabel#error_details {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    color: white;
+    font-size: 12px;
+    font-family: 'Segoe UI';
+    padding: 5px;
+}
 
 /* three playback buttons */
 QLabel#start_button {

@@ -66,7 +66,7 @@ class UploadBox(QLabel):
             urls = event.mimeData().urls()
 
             # If you expect only audio files to be dropped, you can filter them here
-            file_url = [url for url in urls if url.toString().lower().endswith(('.mp3', '.wav', '.ogg'))]
+            file_url = [url for url in urls if url.toString().lower().endswith(('.mp3', '.wav', '.aac', '.flac'))]
 
             # If there are any audio files, call the drag_audio function for it
             if file_url:
@@ -76,7 +76,7 @@ class UploadBox(QLabel):
                     file_name = file_stripped.lstrip('/')
                     drag_audio(file_name)
             else:
-                print('wrong file')
+                drag_error()
 
             event.acceptProposedAction()
         
@@ -278,7 +278,36 @@ def cancel_display_file():
     upl_file_title.resize(0, 0)
     upl_file_subtitle.resize(0, 0)
     file_uploaded = False
-    
+
+def drag_error():
+    upl_box.resize(0, 0)
+    upl_img.resize(0, 0)
+    upl_text.resize(0, 0)
+    error_message_box.resize(e_m_b_w, e_m_b_h)
+    error_title.resize(e_t_w, e_t_h)
+    error_text.resize(e_te_w, e_te_h)
+    details_button.resize(e_b_w, e_b_h)
+    okay_button.resize(e_b_w, e_b_h)
+
+def close_error():
+    upl_box.resize(u_b_w, u_b_h)
+    upl_img.resize(u_i_w, u_i_h)
+    upl_text.resize(u_t_w, u_t_h)
+    error_message_box.resize(0, 0)
+    error_title.resize(0, 0)
+    error_text.resize(0, 0)
+    details_button.resize(0, 0)
+    okay_button.resize(0, 0)
+
+def display_details():
+    if error_message_box.height() < 150:
+        error_details.resize(e_d_w, e_d_h)
+        error_message_box.resize(e_m_b_w, 200)
+        details_button.setText('Hide')
+    else:
+        error_details.resize(0, 0)
+        error_message_box.resize(e_m_b_w, e_m_b_h)
+        details_button.setText('Details...')
 
 # keep GUI running
 if __name__ == '__main__':
@@ -666,6 +695,72 @@ if __name__ == '__main__':
     upl_file_subtitle.move(u_f_st_x, u_f_st_y)
     upl_file_subtitle.resize(0, 0)
     upl_file_title.setAlignment(Qt.AlignLeft)
+
+    detailed_text = ('The details are as follows:'
+                    '\nThe file type uploaded is not'
+                    '\ncompatible with the program,'
+                    '\nmake sure it is a common'
+                    '\naudio format and try again.')
+    e_m_b_x = 860
+    e_m_b_y = 484
+    e_m_b_w = 200
+    e_m_b_h = 111
+    e_t_x = 925
+    e_t_y = 486
+    e_t_w = 70
+    e_t_h = 40
+    e_te_x = 890
+    e_te_y = 528
+    e_te_w = 140
+    e_te_h = 27
+    d_b_x = 868 
+    o_b_x = 962
+    e_b_w = 90
+    e_b_h = 24
+    e_b_y = 563
+    e_d_x = 865
+    e_d_y = 593
+    e_d_w = 190
+    e_d_h = 86
+    
+    error_message_box = QLabel('', window)
+    error_message_box.setObjectName('error_message_box')
+    error_message_box.move(e_m_b_x, e_m_b_y)
+    error_message_box.resize(0, 0)
+
+    error_title = QLabel('Error', window)
+    error_title.setObjectName('error_title')
+    error_title.move(e_t_x, e_t_y)
+    error_title.resize(0, 0)
+
+    error_text = QLabel('Invalid File Type', window)
+    error_text.setObjectName('error_text')
+    error_text.move(e_te_x, e_te_y)
+    error_text.resize(0, 0)
+
+    details_button = ClickableLabel(window)
+    details_button.setObjectName('details_button')
+    details_button.move(d_b_x, e_b_y)
+    details_button.resize(0, 0)
+    details_button.setText('Details...')
+    details_button.setAlignment(Qt.AlignCenter)
+    details_button.clicked.connect(display_details)
+
+    okay_button = SpecialClickableLabel(window)
+    okay_button.setObjectName('okay_button')
+    okay_button.move(o_b_x, e_b_y)
+    okay_button.resize(0, 0)
+    okay_button.setText('Okay')
+    okay_button.setAlignment(Qt.AlignCenter)
+    okay_button.clicked.connect(close_error)
+
+    error_details = QLabel(detailed_text, window)
+    error_details.setObjectName('error_details')
+    error_details.move(e_d_x, e_d_y)
+    error_details.resize(0, 0)
+    error_details.setAlignment(Qt.AlignCenter)
+
+
 
 
     # Load the external stylesheet
