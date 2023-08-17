@@ -260,7 +260,14 @@ QLabel#upl_cont_button::hover {
     background-color: #ff9033;
 }
 
-
+QLabel#upl_greyed_button {
+    background-color: #3d3d3d;
+    border-radius: 17px;
+    color: #bfbfbf;
+    font-size: 20px;
+    font-weight: bold;
+    font-family: 'Segoe UI';
+}
 
 
 QLabel#upl_file_box {
@@ -340,6 +347,14 @@ QLabel#error_details {
     font-size: 12px;
     font-family: 'Segoe UI';
     padding: 5px;
+}
+
+QProgressBar#loading_bar { 
+    color: rgba(0, 0, 0, 0);
+}
+
+QProgressBar#loading_bar::chunk { 
+    background-color: #FF7500;    
 }
 
 /* three playback buttons */

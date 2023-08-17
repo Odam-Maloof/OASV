@@ -1,8 +1,10 @@
 import sys
 import os
+from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtMultimedia import *
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.wave import WAVE
@@ -79,10 +81,39 @@ class UploadBox(QLabel):
                 drag_error()
 
             event.acceptProposedAction()
+
+class LoadingBarWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.progress = 0
+
+    def setProgress(self, value):
+        self.progress = value
+        self.update()  # Trigger a repaint
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Draw the white circle first
+        white_brush = QBrush(Qt.white)
+        painter.setBrush(white_brush)
+        rect = self.rect()
+        painter.drawEllipse(rect)
         
+        pen = QPen(QColor("#FF7600"), 25, Qt.SolidLine)  # Set pen width to 18
+        painter.setPen(pen)
+        
+        rect = self.rect()
+        start_angle = 0  # Start angle remains at 0 to start from the top
+        span_angle = self.progress * 6  # Arc finishes after 60 progress increments
+        rect.adjust(20, 20, -20, -20)  # Adjust the margins as needed
+        painter.drawArc(rect, start_angle * 16, span_angle * 16)  # Multiply by 16 for angles
 
 # define the functions that are part of the program
 first_run = True
+progress = 0
+
 def fullscreen_mode():
     global first_run
     if window.height() == 1040 or first_run:
@@ -166,7 +197,7 @@ def open_upload_menu():
         upl_img.resize(u_i_w, u_i_h)
         upl_text.resize(u_t_w, u_t_h)
         upl_close_button.resize(u_bu_w, u_bu_h)
-        upl_cont_button.resize(u_bu_w, u_bu_h)
+        upl_greyed_button.resize(u_bu_w, u_bu_h)
         label_list = window.findChildren(QLabel, "bar_")
         for label in label_list:
                 label.setStyleSheet("background-color: rgba(255, 117, 0, 0.1);")
@@ -181,6 +212,7 @@ def close_upload_menu():
     upl_text.resize(0, 0)
     upl_close_button.resize(0, 0)
     upl_cont_button.resize(0, 0)
+    upl_greyed_button.resize(0, 0)
     upl_file_box.resize(0, 0)
     upl_music_icon.resize(0, 0)
     upl_cancel_icon.resize(0, 0)
@@ -259,6 +291,8 @@ def display_file(artist, song):
     upl_box.resize(0, 0)
     upl_img.resize(0, 0)
     upl_text.resize(0, 0)
+    upl_greyed_button.resize(0, 0)
+    upl_cont_button.resize(u_bu_w, u_bu_h)
     upl_file_box.resize(u_f_b_w, u_f_b_h)
     upl_music_icon.resize(u_m_i_w, u_m_i_h)
     upl_cancel_icon.resize(u_c_i_w, u_c_i_h)
@@ -272,6 +306,8 @@ def cancel_display_file():
     upl_box.resize(u_b_w, u_b_h)
     upl_img.resize(u_i_w, u_i_h)
     upl_text.resize(u_t_w, u_t_h)
+    upl_greyed_button.resize(u_bu_w, u_bu_h)
+    upl_cont_button.resize(0, 0)
     upl_file_box.resize(0, 0)
     upl_music_icon.resize(0, 0)
     upl_cancel_icon.resize(0, 0)
@@ -308,6 +344,44 @@ def display_details():
         error_details.resize(0, 0)
         error_message_box.resize(e_m_b_w, e_m_b_h)
         details_button.setText('Details...')
+
+def finalise_upload():
+    global selected_audio
+    selected_audio = file_name
+    file_name_pathless = os.path.basename(file_name)
+    artist, song = get_song_info(file_name_pathless)
+    song_name.setText(song)
+    artist_name.setText(artist)
+
+def play_audio():
+    media_content = QMediaContent(QUrl.fromLocalFile(selected_audio))
+    audio_player.setMedia(media_content)
+    audio_player.play()
+
+def start_loading():
+    '''loading_bar.setFixedSize(l_b_dim, l_b_dim)
+    quarter_w.resize(q_dim, q_dim)
+    move_quarter.resize(q_dim, q_dim)'''
+    loading_widget.resize(l_b_dim, l_b_dim)
+    upl_file_box.resize(0, 0)
+    upl_music_icon.resize(0, 0)
+    upl_cancel_icon.resize(0, 0)
+    upl_file_title.resize(0, 0)
+    upl_file_subtitle.resize(0, 0)
+    timer.start(100)  # Update every 200 milliseconds
+
+def update_loading():
+    global progress
+    
+    # print(progress)
+    loading_widget.setProgress(progress)
+    if  progress >= 60:
+        progress = 0
+        timer.stop()
+        finalise_upload()
+    progress += 1  # Update this value based on your needs
+    
+
 
 # keep GUI running
 if __name__ == '__main__':
@@ -423,6 +497,9 @@ if __name__ == '__main__':
     full_button.clicked.connect(fullscreen_mode)
     full_button.setToolTip('Fullscreen')
 
+    # media player
+    audio_player = QMediaPlayer(window)
+
     # add the three playback buttons
     lower_button_loc = window.height() - 98
     start_x = 842
@@ -448,6 +525,7 @@ if __name__ == '__main__':
     play_button.setPixmap(play_2)
     play_button.setAlignment(Qt.AlignCenter)
     play_button.setToolTip('Play')
+    play_button.clicked.connect(play_audio)
     # end button
     end_button = ClickableLabel(window)
     end_button.setObjectName('end_button')
@@ -632,12 +710,19 @@ if __name__ == '__main__':
     upl_close_button.resize(0, 0)
     upl_close_button.clicked.connect(close_upload_menu)
 
+    upl_greyed_button = QLabel('Continue', window)
+    upl_greyed_button.setObjectName('upl_greyed_button')
+    upl_greyed_button.setAlignment(Qt.AlignCenter)
+    upl_greyed_button.move(u_co_b_x, u_bu_y)
+    upl_greyed_button.resize(0, 0)
+
     upl_cont_button = SpecialClickableLabel(window)
     upl_cont_button.setObjectName('upl_cont_button')
     upl_cont_button.setText('Continue')
     upl_cont_button.setAlignment(Qt.AlignCenter)
     upl_cont_button.move(u_co_b_x, u_bu_y)
     upl_cont_button.resize(0, 0)
+    upl_cont_button.clicked.connect(start_loading)
 
     u_f_b_x = 700
     u_f_b_y = 490
@@ -760,8 +845,85 @@ if __name__ == '__main__':
     error_details.resize(0, 0)
     error_details.setAlignment(Qt.AlignCenter)
 
+    l_b_dim = 350
+    l_b_x = 785
+    l_b_y = 365
 
+    loading_widget = LoadingBarWidget(window)
+    loading_widget.move(l_b_x, l_b_y)
+    loading_widget.resize(0, 0)
 
+    '''loading_bar = QProgressBar(window)
+    loading_bar.setObjectName('loading_bar')
+    loading_bar.move(0, 0)
+    loading_bar.resize(0, 0)'''
+    
+
+    '''loading_bar = QLabel(window)
+    loading_bar.setObjectName('loading_bar')
+    loading_bar.move(l_b_x, l_b_y)
+    loading_bar.resize(0, 0)
+    white_ring = QPixmap('images/loading-ring.png')
+    loading_bar.setPixmap(white_ring)
+
+    test_run = 0
+
+    q_dim = 175
+    q_x_l = 785
+    q_x_r = 960
+    q_y_t = 365
+    q_y_b = 540
+    rotate_90 = 90
+    rotate_180 = 180
+    rotate_270 = 270
+    changing_rotation = 270
+    transform_90 = QTransform()
+    transform_90.rotate(rotate_90, Qt.ZAxis)
+    transform_180 = QTransform()
+    transform_180.rotate(rotate_180, Qt.ZAxis)
+    transform_270 = QTransform()
+    transform_270.rotate(rotate_270, Qt.ZAxis)
+
+    orange_ring = QPixmap('images/loading-ring-segment-orange.png')
+    orange_ring_90 = orange_ring.transformed(transform_90)
+    orange_ring_180 = orange_ring.transformed(transform_180)
+    orange_ring_270 = orange_ring.transformed(transform_270)
+    white_segment = QPixmap('images/loading-ring-segment-white.png')
+    white_quarter = white_segment.transformed(transform_270)
+
+    m_x_l = 785
+    m_y_t = 365
+    move_quarter = QLabel(window)
+    move_quarter.move(m_x_l, m_y_t)
+    move_quarter.resize(0, 0)
+    
+    quarter_1 = QLabel(window)
+    quarter_1.move(q_x_r, q_y_t)
+    quarter_1.resize(0, 0)
+    quarter_1.setPixmap(orange_ring)
+
+    quarter_2 = QLabel(window)
+    quarter_2.move(q_x_r, q_y_b)
+    quarter_2.resize(0, 0)
+    quarter_2.setPixmap(orange_ring_90)
+
+    quarter_3 = QLabel(window)
+    quarter_3.move(q_x_l, q_y_b)
+    quarter_3.resize(0, 0)
+    quarter_3.setPixmap(orange_ring_180) 
+
+    quarter_4 = QLabel(window)
+    quarter_4.move(q_x_l, q_y_t)
+    quarter_4.resize(0, 0)
+    quarter_4.setPixmap(orange_ring_270) 
+
+    quarter_w = QLabel(window)
+    quarter_w.move(q_x_l, q_y_t)
+    quarter_w.resize(0, 0)
+    quarter_w.setPixmap(white_quarter)'''
+
+    timer = QTimer()
+    timer.timeout.connect(update_loading)
 
     # Load the external stylesheet
     with open('sheets/stylesheet.qss', 'r') as file:
