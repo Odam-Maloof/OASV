@@ -86,33 +86,47 @@ class LoadingBarWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.progress = 0
+        self.remove = 0
 
     def setProgress(self, value):
         self.progress = value
+        self.remove = value
         self.update()  # Trigger a repaint
+    
+    def cancelLoading(self, progress):
+        progress = 0
+        remove = -1
+        self.remove = remove
+        self.progress = progress
+        self.repaint()  # Redraw the widget
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # Draw the white circle first
-        white_brush = QBrush(Qt.white)
-        painter.setBrush(white_brush)
-        rect = self.rect()
-        painter.drawEllipse(rect)
+        if self.remove != -1:
+            # Draw the white ring
+            white_pen = QPen(Qt.white, 25, Qt.SolidLine)
+            painter.setPen(white_pen)
+            rect = self.rect()
+            start_angle = 0
+            span_angle = 360 * 16  # Full circle
+            rect.adjust(20, 20, -20, -20)  # Adjust the margins as needed
+            painter.drawArc(rect, start_angle * 16, span_angle)
         
         pen = QPen(QColor("#FF7600"), 25, Qt.SolidLine)  # Set pen width to 18
         painter.setPen(pen)
         
         rect = self.rect()
-        start_angle = 0  # Start angle remains at 0 to start from the top
-        span_angle = self.progress * 6  # Arc finishes after 60 progress increments
+        start_angle = 90  # Start angle remains at 0 to start from the top
+        span_angle = -self.progress * 6  # Arc finishes after 60 progress increments
         rect.adjust(20, 20, -20, -20)  # Adjust the margins as needed
         painter.drawArc(rect, start_angle * 16, span_angle * 16)  # Multiply by 16 for angles
 
 # define the functions that are part of the program
 first_run = True
 progress = 0
+paused_position = 0
 
 def fullscreen_mode():
     global first_run
@@ -219,6 +233,11 @@ def close_upload_menu():
     upl_file_title.resize(0, 0)
     upl_file_subtitle.resize(0, 0)
     label_list = window.findChildren(QLabel, "bar_")
+    timer.stop()
+    loading_widget.cancelLoading(progress)
+    loading_widget.resize(0, 0)
+    load_cancel_button.resize(0, 0)
+    load_done_button.resize(0, 0)
     for label in label_list:
             label.setStyleSheet("background-color: rgba(255, 117, 0, 1);")
     file_uploaded = False
@@ -334,6 +353,7 @@ def close_error():
     error_text.resize(0, 0)
     details_button.resize(0, 0)
     okay_button.resize(0, 0)
+        
 
 def display_details():
     if error_message_box.height() < 150:
@@ -352,11 +372,26 @@ def finalise_upload():
     artist, song = get_song_info(file_name_pathless)
     song_name.setText(song)
     artist_name.setText(artist)
+    load_cancel_button.resize(0, 0)
+    load_done_button.resize(l_c_b_w, l_c_b_h)
+
 
 def play_audio():
-    media_content = QMediaContent(QUrl.fromLocalFile(selected_audio))
-    audio_player.setMedia(media_content)
+    if paused_position == 0:
+        media_content = QMediaContent(QUrl.fromLocalFile(selected_audio))
+        audio_player.setMedia(media_content)
+    else:
+        audio_player.setPosition(paused_position)
     audio_player.play()
+    pause_button.resize(n_b_w, n_b_h)
+    play_button.resize(0, 0)
+
+def pause_audio():
+    global paused_position
+    paused_position = audio_player.position()
+    audio_player.pause()
+    play_button.resize(n_b_w, n_b_h)
+    pause_button.resize(0, 0)
 
 def start_loading():
     '''loading_bar.setFixedSize(l_b_dim, l_b_dim)
@@ -368,12 +403,14 @@ def start_loading():
     upl_cancel_icon.resize(0, 0)
     upl_file_title.resize(0, 0)
     upl_file_subtitle.resize(0, 0)
-    timer.start(100)  # Update every 200 milliseconds
+    timer.start(50)  # Update every 200 milliseconds
+    load_cancel_button.resize(l_c_b_w, l_c_b_h)
+    load_done_button.resize(0, 0)
+    upl_close_button. resize(0, 0)
+    upl_cont_button.resize(0, 0)
 
 def update_loading():
     global progress
-    
-    # print(progress)
     loading_widget.setProgress(progress)
     if  progress >= 60:
         progress = 0
@@ -381,6 +418,23 @@ def update_loading():
         finalise_upload()
     progress += 1  # Update this value based on your needs
     
+def cancel_loading():
+    timer.stop()
+    loading_widget.cancelLoading(progress)
+    loading_widget.resize(0, 0)
+    load_cancel_button.resize(0, 0)
+    load_done_button.resize(0, 0)
+    upl_box.resize(u_b_w, u_b_h)
+    upl_img.resize(u_i_w, u_i_h)
+    upl_text.resize(u_t_w, u_t_h)
+    upl_greyed_button.resize(u_bu_w, u_bu_h)
+    upl_cont_button.resize(0, 0)
+    upl_file_box.resize(0, 0)
+    upl_music_icon.resize(0, 0)
+    upl_cancel_icon.resize(0, 0)
+    upl_file_title.resize(0, 0)
+    upl_file_subtitle.resize(0, 0)
+    upl_close_button. resize(u_bu_w, u_bu_h)
 
 
 # keep GUI running
@@ -526,6 +580,17 @@ if __name__ == '__main__':
     play_button.setAlignment(Qt.AlignCenter)
     play_button.setToolTip('Play')
     play_button.clicked.connect(play_audio)
+    # pause button
+    pause_button = ClickableLabel(window)
+    pause_button.setObjectName('play_button')
+    pause_button.move(play_x, lower_button_loc)
+    pause_button.resize(0, 0)
+    pause = QPixmap('images/pause-line.png')
+    pause_2 = pause.scaled(24,24)
+    pause_button.setPixmap(pause_2)
+    pause_button.setAlignment(Qt.AlignCenter)
+    pause_button.setToolTip('Play')
+    pause_button.clicked.connect(pause_audio)
     # end button
     end_button = ClickableLabel(window)
     end_button.setObjectName('end_button')
@@ -853,77 +918,31 @@ if __name__ == '__main__':
     loading_widget.move(l_b_x, l_b_y)
     loading_widget.resize(0, 0)
 
-    '''loading_bar = QProgressBar(window)
-    loading_bar.setObjectName('loading_bar')
-    loading_bar.move(0, 0)
-    loading_bar.resize(0, 0)'''
     
-
-    '''loading_bar = QLabel(window)
-    loading_bar.setObjectName('loading_bar')
-    loading_bar.move(l_b_x, l_b_y)
-    loading_bar.resize(0, 0)
-    white_ring = QPixmap('images/loading-ring.png')
-    loading_bar.setPixmap(white_ring)
-
-    test_run = 0
-
-    q_dim = 175
-    q_x_l = 785
-    q_x_r = 960
-    q_y_t = 365
-    q_y_b = 540
-    rotate_90 = 90
-    rotate_180 = 180
-    rotate_270 = 270
-    changing_rotation = 270
-    transform_90 = QTransform()
-    transform_90.rotate(rotate_90, Qt.ZAxis)
-    transform_180 = QTransform()
-    transform_180.rotate(rotate_180, Qt.ZAxis)
-    transform_270 = QTransform()
-    transform_270.rotate(rotate_270, Qt.ZAxis)
-
-    orange_ring = QPixmap('images/loading-ring-segment-orange.png')
-    orange_ring_90 = orange_ring.transformed(transform_90)
-    orange_ring_180 = orange_ring.transformed(transform_180)
-    orange_ring_270 = orange_ring.transformed(transform_270)
-    white_segment = QPixmap('images/loading-ring-segment-white.png')
-    white_quarter = white_segment.transformed(transform_270)
-
-    m_x_l = 785
-    m_y_t = 365
-    move_quarter = QLabel(window)
-    move_quarter.move(m_x_l, m_y_t)
-    move_quarter.resize(0, 0)
-    
-    quarter_1 = QLabel(window)
-    quarter_1.move(q_x_r, q_y_t)
-    quarter_1.resize(0, 0)
-    quarter_1.setPixmap(orange_ring)
-
-    quarter_2 = QLabel(window)
-    quarter_2.move(q_x_r, q_y_b)
-    quarter_2.resize(0, 0)
-    quarter_2.setPixmap(orange_ring_90)
-
-    quarter_3 = QLabel(window)
-    quarter_3.move(q_x_l, q_y_b)
-    quarter_3.resize(0, 0)
-    quarter_3.setPixmap(orange_ring_180) 
-
-    quarter_4 = QLabel(window)
-    quarter_4.move(q_x_l, q_y_t)
-    quarter_4.resize(0, 0)
-    quarter_4.setPixmap(orange_ring_270) 
-
-    quarter_w = QLabel(window)
-    quarter_w.move(q_x_l, q_y_t)
-    quarter_w.resize(0, 0)
-    quarter_w.setPixmap(white_quarter)'''
-
     timer = QTimer()
     timer.timeout.connect(update_loading)
+
+    l_c_b_x = 829
+    l_c_b_y = 790
+    l_c_b_w = 262
+    l_c_b_h = 40
+
+    load_cancel_button = ClickableLabel(window)
+    load_cancel_button.setObjectName('upl_close_button')
+    load_cancel_button.move(l_c_b_x, l_c_b_y)
+    load_cancel_button.resize(0, 0)
+    load_cancel_button.setText('Cancel')
+    load_cancel_button.setAlignment(Qt.AlignCenter)
+    load_cancel_button.clicked.connect(cancel_loading)
+
+    load_done_button = SpecialClickableLabel(window)
+    load_done_button.setObjectName('upl_cont_button')
+    load_done_button.move(l_c_b_x, l_c_b_y)
+    load_done_button.resize(0, 0)
+    load_done_button.setText('Done')
+    load_done_button.setAlignment(Qt.AlignCenter)
+    load_done_button.clicked.connect(close_upload_menu)
+    
 
     # Load the external stylesheet
     with open('sheets/stylesheet.qss', 'r') as file:
