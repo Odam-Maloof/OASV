@@ -91,14 +91,14 @@ class LoadingBarWidget(QWidget):
     def setProgress(self, value):
         self.progress = value
         self.remove = value
-        self.update()  # Trigger a repaint
+        self.repaint()  # Trigger a repaint
     
-    def cancelLoading(self, progress):
-        progress = 0
-        remove = -1
-        self.remove = remove
-        self.progress = progress
-        self.repaint()  # Redraw the widget
+    def cancelLoading(self):
+        self.remove = -1
+        self.progress = 0
+        # print(self.progress)
+        self.setProgress(self.progress)
+        # self.repaint()  # Redraw the widget
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -114,14 +114,19 @@ class LoadingBarWidget(QWidget):
             rect.adjust(20, 20, -20, -20)  # Adjust the margins as needed
             painter.drawArc(rect, start_angle * 16, span_angle)
         
-        pen = QPen(QColor("#FF7600"), 25, Qt.SolidLine)  # Set pen width to 18
-        painter.setPen(pen)
-        
-        rect = self.rect()
-        start_angle = 90  # Start angle remains at 0 to start from the top
-        span_angle = -self.progress * 6  # Arc finishes after 60 progress increments
-        rect.adjust(20, 20, -20, -20)  # Adjust the margins as needed
-        painter.drawArc(rect, start_angle * 16, span_angle * 16)  # Multiply by 16 for angles
+            pen = QPen(QColor("#FF7600"), 25, Qt.SolidLine)  # Set pen width to 18
+            painter.setPen(pen)
+            
+            
+            rect = self.rect()
+            start_angle = 90  # Start angle remains at 0 to start from the top
+            span_angle = -self.progress * 6  # Arc finishes after 60 progress increments
+            rect.adjust(20, 20, -20, -20)  # Adjust the margins as needed
+            painter.drawArc(rect, start_angle * 16, span_angle * 16)  # Multiply by 16 for angles
+        '''elif self.remove == -1:
+            print('heh')
+            self.progress = 0
+            print(self.progress)'''
 
 # define the functions that are part of the program
 first_run = True
@@ -234,7 +239,7 @@ def close_upload_menu():
     upl_file_subtitle.resize(0, 0)
     label_list = window.findChildren(QLabel, "bar_")
     timer.stop()
-    loading_widget.cancelLoading(progress)
+    loading_widget.cancelLoading()
     loading_widget.resize(0, 0)
     load_cancel_button.resize(0, 0)
     load_done_button.resize(0, 0)
@@ -366,7 +371,8 @@ def display_details():
         details_button.setText('Details...')
 
 def finalise_upload():
-    global selected_audio
+    global selected_audio, paused_position
+    paused_position = 0
     selected_audio = file_name
     file_name_pathless = os.path.basename(file_name)
     artist, song = get_song_info(file_name_pathless)
@@ -377,14 +383,17 @@ def finalise_upload():
 
 
 def play_audio():
-    if paused_position == 0:
-        media_content = QMediaContent(QUrl.fromLocalFile(selected_audio))
-        audio_player.setMedia(media_content)
-    else:
-        audio_player.setPosition(paused_position)
-    audio_player.play()
-    pause_button.resize(n_b_w, n_b_h)
-    play_button.resize(0, 0)
+    try:
+        if paused_position == 0:
+            media_content = QMediaContent(QUrl.fromLocalFile(selected_audio))
+            audio_player.setMedia(media_content)
+        else:
+            audio_player.setPosition(paused_position)
+        audio_player.play()
+        pause_button.resize(n_b_w, n_b_h)
+        play_button.resize(0, 0)
+    except Exception:
+        pass
 
 def pause_audio():
     global paused_position
@@ -393,7 +402,26 @@ def pause_audio():
     play_button.resize(n_b_w, n_b_h)
     pause_button.resize(0, 0)
 
+def start_audio():
+    global paused_position
+    try:
+        paused_position = 0
+        audio_player.setPosition(paused_position)
+    except Exception:
+        print('what')
+
+def skip_audio():
+    global paused_position
+    try:
+        paused_position = audio_player.position()
+        paused_position = paused_position + 15000
+        audio_player.setPosition(paused_position)
+    except Exception:
+        print('what')
+
 def start_loading():
+    global progress
+    progress = 0
     '''loading_bar.setFixedSize(l_b_dim, l_b_dim)
     quarter_w.resize(q_dim, q_dim)
     move_quarter.resize(q_dim, q_dim)'''
@@ -403,7 +431,7 @@ def start_loading():
     upl_cancel_icon.resize(0, 0)
     upl_file_title.resize(0, 0)
     upl_file_subtitle.resize(0, 0)
-    timer.start(50)  # Update every 200 milliseconds
+    timer.start(20)  # Update every 200 milliseconds
     load_cancel_button.resize(l_c_b_w, l_c_b_h)
     load_done_button.resize(0, 0)
     upl_close_button. resize(0, 0)
@@ -420,7 +448,8 @@ def update_loading():
     
 def cancel_loading():
     timer.stop()
-    loading_widget.cancelLoading(progress)
+    progress = 0
+    loading_widget.cancelLoading()
     loading_widget.resize(0, 0)
     load_cancel_button.resize(0, 0)
     load_done_button.resize(0, 0)
@@ -569,6 +598,7 @@ if __name__ == '__main__':
     start_button.setPixmap(start_2)
     start_button.setAlignment(Qt.AlignCenter)
     start_button.setToolTip('Start')
+    start_button.clicked.connect(start_audio)
     # play button
     play_button = ClickableLabel(window)
     play_button.setObjectName('play_button')
@@ -589,18 +619,19 @@ if __name__ == '__main__':
     pause_2 = pause.scaled(24,24)
     pause_button.setPixmap(pause_2)
     pause_button.setAlignment(Qt.AlignCenter)
-    pause_button.setToolTip('Play')
+    pause_button.setToolTip('Pause')
     pause_button.clicked.connect(pause_audio)
     # end button
     end_button = ClickableLabel(window)
     end_button.setObjectName('end_button')
     end_button.move(end_x, lower_button_loc)
     end_button.resize(n_b_w, n_b_h)
-    end = QPixmap('images/skip-forward-line.png')
-    end_2 = end.scaled(24,24)
-    end_button.setPixmap(end_2)
+    fifteen = QPixmap('images/forward-15-line.png')
+    fifteen_2 = fifteen.scaled(24,24)
+    end_button.setPixmap(fifteen_2)
     end_button.setAlignment(Qt.AlignCenter)
-    end_button.setToolTip('End')
+    end_button.setToolTip('Skip 15')
+    end_button.clicked.connect(skip_audio)
 
     # add the placeholder paused visual
     bar_x = 656
