@@ -372,10 +372,15 @@ def display_details():
 
 def finalise_upload():
     global selected_audio, paused_position
+    pause_audio()
     paused_position = 0
     selected_audio = file_name
     file_name_pathless = os.path.basename(file_name)
     artist, song = get_song_info(file_name_pathless)
+    if len(song) > 13:
+        song = song[:11].rstrip() + "..."
+    if len(artist) > 20:
+        artist = artist[:18].rstrip() + "..."
     song_name.setText(song)
     artist_name.setText(artist)
     load_cancel_button.resize(0, 0)
@@ -649,20 +654,22 @@ if __name__ == '__main__':
     # variables
     song_x = 56
     song_y = 489
-    song_w = 264
+    song_w = 404
     song_h = 67
     artist_x = 56
     artist_y = 564
-    artist_w = 110
+    artist_w = 310
     artist_h = 27
     song_name = QLabel('Song name', window)
     song_name.setObjectName('song_name')
     song_name.move(song_x, song_y)
     song_name.resize(song_w, song_h)
+    song_name.setAlignment(Qt.AlignLeft)
     artist_name = QLabel('Artist name', window)
     artist_name.setObjectName('artist_name')
     artist_name.move(artist_x, artist_y)
     artist_name.resize(artist_w, artist_h)
+    artist_name.setAlignment(Qt.AlignLeft)
 
     # the menus
     # info menu
