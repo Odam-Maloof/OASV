@@ -1,5 +1,7 @@
 import sys
 import os
+import numpy as numpy
+import random
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -397,6 +399,7 @@ def play_audio():
         audio_player.play()
         pause_button.resize(n_b_w, n_b_h)
         play_button.resize(0, 0)
+        audio_timer.start(100)
     except Exception:
         pass
 
@@ -406,6 +409,7 @@ def pause_audio():
     audio_player.pause()
     play_button.resize(n_b_w, n_b_h)
     pause_button.resize(0, 0)
+    audio_timer.stop()
 
 def start_audio():
     global paused_position
@@ -441,6 +445,7 @@ def start_loading():
     load_done_button.resize(0, 0)
     upl_close_button. resize(0, 0)
     upl_cont_button.resize(0, 0)
+    
 
 def update_loading():
     global progress
@@ -469,6 +474,20 @@ def cancel_loading():
     upl_file_title.resize(0, 0)
     upl_file_subtitle.resize(0, 0)
     upl_close_button. resize(u_bu_w, u_bu_h)
+
+def update_visualizer():
+    label_list = window.findChildren(QLabel, "bar_")
+    bar_x = 656
+    bar_y = 534
+    bar_gap = 32
+    for i, label in enumerate(label_list):
+        amplitude_data = random.randint(1, 400)
+        bar_y = 534 - (amplitude_data/2)
+        # scaled_height = int(amplitude_data[i] * 1000)
+        scaled_height = 12 + (amplitude_data)
+        label.move(bar_x, int(bar_y))
+        label.setFixedHeight(scaled_height)
+        bar_x += bar_gap
 
 
 # keep GUI running
@@ -959,6 +978,9 @@ if __name__ == '__main__':
     
     timer = QTimer()
     timer.timeout.connect(update_loading)
+
+    audio_timer = QTimer()
+    audio_timer.timeout.connect(update_visualizer)
 
     l_c_b_x = 829
     l_c_b_y = 790
