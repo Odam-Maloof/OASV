@@ -1,6 +1,7 @@
 import sys
 import os
 import numpy as numpy
+import librosa
 import random
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
@@ -134,6 +135,7 @@ class LoadingBarWidget(QWidget):
 first_run = True
 progress = 0
 paused_position = 0
+interval = 8
 
 def fullscreen_mode():
     global first_run
@@ -373,7 +375,7 @@ def display_details():
         details_button.setText('Details...')
 
 def finalise_upload():
-    global selected_audio, paused_position
+    global selected_audio, paused_position, bar_x
     pause_audio()
     paused_position = 0
     selected_audio = file_name
@@ -387,6 +389,8 @@ def finalise_upload():
     artist_name.setText(artist)
     load_cancel_button.resize(0, 0)
     load_done_button.resize(l_c_b_w, l_c_b_h)
+    bar_x = 656
+    get_amplitudes(selected_audio)
 
 
 def play_audio():
@@ -399,7 +403,7 @@ def play_audio():
         audio_player.play()
         pause_button.resize(n_b_w, n_b_h)
         play_button.resize(0, 0)
-        audio_timer.start(100)
+        audio_timer.start(interval)
     except Exception:
         pass
 
@@ -475,20 +479,49 @@ def cancel_loading():
     upl_file_subtitle.resize(0, 0)
     upl_close_button. resize(u_bu_w, u_bu_h)
 
+k = 0
+l = 0
+bar_x = 656
 def update_visualizer():
-    label_list = window.findChildren(QLabel, "bar_")
-    bar_x = 656
+    global k, l, bar_x
     bar_y = 534
     bar_gap = 32
-    for i, label in enumerate(label_list):
-        amplitude_data = random.randint(1, 400)
-        bar_y = 534 - (amplitude_data/2)
-        # scaled_height = int(amplitude_data[i] * 1000)
-        scaled_height = 12 + (amplitude_data)
-        label.move(bar_x, int(bar_y))
-        label.setFixedHeight(scaled_height)
-        bar_x += bar_gap
+    label_list = window.findChildren(QLabel, "bar_")
+    amplitude_data = amplitude_values[k]
+    scaled_height = 12 + (amplitude_data * 400)
+    scaled_height = int(scaled_height)
+    bar_y = 534 - (scaled_height/2)
+    label_list[l].move(bar_x, int(bar_y))
+    label_list[l].setFixedHeight(scaled_height)
+    bar_x += bar_gap
+    k += 1
+    l += 1
+    if l == 20:
+        l = 0
+        bar_x = 656
 
+
+def get_amplitudes(file_path):
+    global amplitude_values
+    interval_ms = interval
+    # Load the audio file
+    y, sr = librosa.load(file_path)
+
+    # Calculate the number of samples in each interval
+    interval_samples = int((interval_ms / 1000) * sr)
+
+    # Calculate the number of intervals
+    num_intervals = len(y) // interval_samples
+
+    # Initialize a list to store amplitude values
+    amplitude_values = []
+
+    # Iterate over intervals and calculate the amplitude for each
+    for i in range(num_intervals):
+        start_sample = i * interval_samples
+        end_sample = (i + 1) * interval_samples
+        interval_amplitude = numpy.max(numpy.abs(y[start_sample:end_sample]))
+        amplitude_values.append(interval_amplitude)
 
 # keep GUI running
 if __name__ == '__main__':
