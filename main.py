@@ -4,6 +4,8 @@ import numpy as numpy
 import librosa
 import time
 import threading
+import pyaudio
+import wave
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -48,6 +50,22 @@ class AudioAnalyzerThread(threading.Thread):
             end_sample = (i + 1) * interval_samples
             interval_amplitude = numpy.max(numpy.abs(y[start_sample:end_sample]))
             amplitude_values.append(interval_amplitude)
+        '''    
+        # Initialize PyAudio
+        p = pyaudio.PyAudio()
+
+        # Open the audio file
+        with wave.open(selected_audio, 'rb') as wf:
+            audio_data = wf.read()
+
+        # Create a PyAudio stream
+        stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                        channels=wf.getnchannels(),
+                        rate=wf.getframerate(),
+                        output=True)
+
+        # Play the audio
+        stream.write(audio_data)'''
         
 
 # make labels clickable with this class
@@ -415,8 +433,8 @@ def display_details():
 
 def finalise_upload():
     global paused_position, bar_x
-    pause_audio()
-    paused_position = 0
+    '''pause_audio()
+    paused_position = 0'''
     file_name_pathless = os.path.basename(file_name)
     artist, song = get_song_info(file_name_pathless)
     if len(song) > 13:
@@ -431,7 +449,7 @@ def finalise_upload():
 
 
 def play_audio():
-    try:
+    '''try:
         if paused_position == 0:
             media_content = QMediaContent(QUrl.fromLocalFile(selected_audio))
             audio_player.setMedia(media_content)
@@ -444,18 +462,37 @@ def play_audio():
         play_button.resize(0, 0)
         audio_timer.start(interval)
     except Exception:
-        pass
+        pass'''
+      
+    global stream
+    # Initialize PyAudio
+    p = pyaudio.PyAudio()
+    # Open the audio file
+    with wave.open(selected_audio, 'rb') as wf:
+        audio_data = wf.readframes(-1)
+    # Create a PyAudio stream
+    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                    channels=wf.getnchannels(),
+                    rate=wf.getframerate(),
+                    output=True)
+
+    # Play the audio
+    stream.write(audio_data)
+    pause_button.resize(n_b_w, n_b_h)
+    play_button.resize(0, 0)
+    audio_timer.start(interval)
 
 def pause_audio():
-    global paused_position
+    '''global paused_position
     paused_position = audio_player.position()
     audio_player.pause()
     play_button.resize(n_b_w, n_b_h)
     pause_button.resize(0, 0)
-    audio_timer.stop()
+    audio_timer.stop()'''
+    stream.stop_stream()
 
 def start_audio():
-    global paused_position, k, l, bar_x
+    '''global paused_position, k, l, bar_x
     try:
         paused_position = 0
         audio_player.setPosition(paused_position)
@@ -463,17 +500,19 @@ def start_audio():
         l = 0
         bar_x = 656
     except Exception:
-        print('what')
+        print('what')'''
+    pass
 
 def skip_audio():
-    global paused_position, k
+    '''global paused_position, k
     try:
         paused_position = audio_player.position()
         paused_position = paused_position + 15000
         audio_player.setPosition(paused_position)
         k = int(paused_position // 3)
     except Exception:
-        print('what')
+        print('what')'''
+    pass
 
 def start_loading():
     global progress, selected_audio
