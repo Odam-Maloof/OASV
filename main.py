@@ -2,7 +2,8 @@ import sys
 import os
 import numpy as numpy
 import librosa
-import random
+import time
+import threading
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -12,6 +13,42 @@ from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.wave import WAVE
 from mutagen.aac import AAC
+
+class AudioAnalyzerThread(threading.Thread):
+    
+
+    def __init__(self):
+        super().__init__()
+
+    def run(self):
+        global selected_audio
+        file_path = selected_audio
+        global amplitude_values
+        interval_ms = interval
+        try:
+            if audio_analyzer_thread and audio_analyzer_thread.is_alive():
+                    return
+        except UnboundLocalError:
+            pass
+        # Load the audio file
+        y, sr = librosa.load(file_path)
+
+        # Calculate the number of samples in each interval
+        interval_samples = int((interval_ms / 1000) * sr)
+
+        # Calculate the number of intervals
+        num_intervals = len(y) // interval_samples
+
+        # Initialize a list to store amplitude values
+        amplitude_values = []
+
+        # Iterate over intervals and calculate the amplitude for each
+        for i in range(num_intervals):
+            start_sample = i * interval_samples
+            end_sample = (i + 1) * interval_samples
+            interval_amplitude = numpy.max(numpy.abs(y[start_sample:end_sample]))
+            amplitude_values.append(interval_amplitude)
+        
 
 # make labels clickable with this class
 class ClickableLabel(QLabel):
@@ -135,7 +172,9 @@ class LoadingBarWidget(QWidget):
 first_run = True
 progress = 0
 paused_position = 0
-interval = 8
+interval = 3
+# create thread
+audio_analyzer_thread = None
 
 def fullscreen_mode():
     global first_run
@@ -375,10 +414,9 @@ def display_details():
         details_button.setText('Details...')
 
 def finalise_upload():
-    global selected_audio, paused_position, bar_x
+    global paused_position, bar_x
     pause_audio()
     paused_position = 0
-    selected_audio = file_name
     file_name_pathless = os.path.basename(file_name)
     artist, song = get_song_info(file_name_pathless)
     if len(song) > 13:
@@ -390,7 +428,6 @@ def finalise_upload():
     load_cancel_button.resize(0, 0)
     load_done_button.resize(l_c_b_w, l_c_b_h)
     bar_x = 656
-    get_amplitudes(selected_audio)
 
 
 def play_audio():
@@ -400,7 +437,9 @@ def play_audio():
             audio_player.setMedia(media_content)
         else:
             audio_player.setPosition(paused_position)
+        
         audio_player.play()
+        time.sleep(0.5)
         pause_button.resize(n_b_w, n_b_h)
         play_button.resize(0, 0)
         audio_timer.start(interval)
@@ -416,24 +455,29 @@ def pause_audio():
     audio_timer.stop()
 
 def start_audio():
-    global paused_position
+    global paused_position, k, l, bar_x
     try:
         paused_position = 0
         audio_player.setPosition(paused_position)
+        k = 0
+        l = 0
+        bar_x = 656
     except Exception:
         print('what')
 
 def skip_audio():
-    global paused_position
+    global paused_position, k
     try:
         paused_position = audio_player.position()
         paused_position = paused_position + 15000
         audio_player.setPosition(paused_position)
+        k = int(paused_position // 3)
     except Exception:
         print('what')
 
 def start_loading():
-    global progress
+    global progress, selected_audio
+    selected_audio = file_name
     progress = 0
     '''loading_bar.setFixedSize(l_b_dim, l_b_dim)
     quarter_w.resize(q_dim, q_dim)
@@ -449,6 +493,7 @@ def start_loading():
     load_done_button.resize(0, 0)
     upl_close_button. resize(0, 0)
     upl_cont_button.resize(0, 0)
+    get_amplitudes(selected_audio)
     
 
 def update_loading():
@@ -459,6 +504,7 @@ def update_loading():
         timer.stop()
         finalise_upload()
     progress += 1  # Update this value based on your needs
+    
     
 def cancel_loading():
     timer.stop()
@@ -483,45 +529,33 @@ k = 0
 l = 0
 bar_x = 656
 def update_visualizer():
-    global k, l, bar_x
-    bar_y = 534
-    bar_gap = 32
-    label_list = window.findChildren(QLabel, "bar_")
-    amplitude_data = amplitude_values[k]
-    scaled_height = 12 + (amplitude_data * 400)
-    scaled_height = int(scaled_height)
-    bar_y = 534 - (scaled_height/2)
-    label_list[l].move(bar_x, int(bar_y))
-    label_list[l].setFixedHeight(scaled_height)
-    bar_x += bar_gap
-    k += 1
-    l += 1
-    if l == 20:
-        l = 0
-        bar_x = 656
+    try:
+        global k, l, bar_x
+        bar_y = 534
+        bar_gap = 32
+        label_list = window.findChildren(QLabel, "bar_")
+        amplitude_data = amplitude_values[k]
+        scaled_height = 12 + (amplitude_data * 400)
+        scaled_height = int(scaled_height)
+        bar_y = 534 - (scaled_height/2)
+        label_list[l].move(bar_x, int(bar_y))
+        label_list[l].setFixedHeight(scaled_height)
+        bar_x += bar_gap
+        k += 1
+        l += 1
+        if l == 20:
+            l = 0
+            bar_x = 656
+    except IndexError:
+        audio_timer.stop()
 
 
 def get_amplitudes(file_path):
-    global amplitude_values
-    interval_ms = interval
-    # Load the audio file
-    y, sr = librosa.load(file_path)
-
-    # Calculate the number of samples in each interval
-    interval_samples = int((interval_ms / 1000) * sr)
-
-    # Calculate the number of intervals
-    num_intervals = len(y) // interval_samples
-
-    # Initialize a list to store amplitude values
-    amplitude_values = []
-
-    # Iterate over intervals and calculate the amplitude for each
-    for i in range(num_intervals):
-        start_sample = i * interval_samples
-        end_sample = (i + 1) * interval_samples
-        interval_amplitude = numpy.max(numpy.abs(y[start_sample:end_sample]))
-        amplitude_values.append(interval_amplitude)
+    audio_analyzer_thread = AudioAnalyzerThread()
+    
+    audio_analyzer_thread.start()
+    
+    
 
 # keep GUI running
 if __name__ == '__main__':
