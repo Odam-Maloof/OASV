@@ -22,12 +22,16 @@ class AudioAnalyzerThread(threading.Thread):
         super().__init__()
 
     def run(self):
-        
-        global selected_audio
+        global selected_audio, first_play
         file_path = selected_audio
         
-        global amplitude_values
-        interval_ms = interval
+        global amplitude_values, interval_ms
+
+        try:
+            h_interval_ms = vis_interval_box.text()
+            interval_ms = int(h_interval_ms)
+        except Exception:
+            interval_ms = interval
         try:
             if audio_analyzer_thread and audio_analyzer_thread.is_alive():
                     return
@@ -51,45 +55,15 @@ class AudioAnalyzerThread(threading.Thread):
             end_sample = (i + 1) * interval_samples
             interval_amplitude = numpy.max(numpy.abs(y[start_sample:end_sample]))
             amplitude_values.append(interval_amplitude)
-        '''
-        global selected_audio
-        file_path = selected_audio
+    
+        media_content = QMediaContent(QUrl.fromLocalFile(selected_audio))
+        audio_player.setMedia(media_content)
+        audio_player.setVolume(0)
+        audio_player.play()
+        first_play = True
+
         
-        global amplitude_envelopes
-        interval_ms = interval
-        try:
-            if audio_analyzer_thread and audio_analyzer_thread.is_alive():
-                    return
-        except UnboundLocalError:
-            pass
-        # Load the audio file
-        y, sr = librosa.load(file_path)
-
-        # Calculate the number of samples in each interval
-        interval_samples = int((interval_ms / 1000) * sr)
-
-        # Calculate the number of intervals
-        num_intervals = len(y) // interval_samples
-
-        # Initialize a list to store amplitude envelope values
-        amplitude_envelopes = []
-
-        # Rectify the audio signal (convert negative values to positive)
-        y_rectified = numpy.abs(y)
-
-        # Apply a low-pass filter to smooth the envelope (optional)
-        # Adjust the filter parameters as needed
-        cutoff_frequency = 10.0  # Adjust this value as needed
-        filter_order = 3  # Adjust this value as needed
-        b, a = scipy.signal.butter(filter_order, cutoff_frequency / (0.5 * sr), 'low')
-        y_smoothed = scipy.signal.filtfilt(b, a, y_rectified)
-
-        # Iterate over intervals and calculate the amplitude envelope for each
-        for i in range(num_intervals):
-            start_sample = i * interval_samples
-            end_sample = (i + 1) * interval_samples
-            interval_amplitude = numpy.max(y_smoothed[start_sample:end_sample])
-            amplitude_envelopes.append(interval_amplitude)'''
+        
         
 
 # make labels clickable with this class
@@ -214,7 +188,7 @@ class LoadingBarWidget(QWidget):
 first_run = True
 progress = 0
 paused_position = 0
-interval = 5
+interval = 10
 # create thread
 audio_analyzer_thread = None
 
@@ -226,6 +200,7 @@ def fullscreen_mode():
         start_button.move(842, lower_button_loc)
         play_button.move(924, lower_button_loc)
         end_button.move(1006, lower_button_loc)
+        pause_button.move(924, lower_button_loc)
         implode = QPixmap('images/fullscreen-exit-line.png')
         implode_2 = implode.scaled(24,24)
         full_button.setPixmap(implode_2)
@@ -244,6 +219,7 @@ def fullscreen_mode():
         start_button.move(842, lower_button_loc)
         play_button.move(924, lower_button_loc)
         end_button.move(1006, lower_button_loc)
+        pause_button.move(924, lower_button_loc)
         title_bar.resize(title_bar_width, title_bar_height)
         mini_button.resize(title_button_width, title_bar_height)
         maxi_button.resize(title_button_width, title_bar_height)
@@ -262,6 +238,7 @@ def maximised_mode():
         lower_button_loc = window.height() - 58
         start_button.move(842, lower_button_loc)
         play_button.move(924, lower_button_loc)
+        pause_button.move(924, lower_button_loc)
         end_button.move(1006, lower_button_loc)
     elif window.height() == 1040:
         pass
@@ -324,6 +301,7 @@ def close_upload_menu():
     upl_file_subtitle.resize(0, 0)
     label_list = window.findChildren(QLabel, "bar_")
     timer.stop()
+    auto_close_timer.stop()
     loading_widget.cancelLoading()
     loading_widget.resize(0, 0)
     load_cancel_button.resize(0, 0)
@@ -358,9 +336,9 @@ def get_song_info(file_name):
     parts = file_name.split("-")
     if len(parts) >= 2:
         artist = parts[0].strip()  # Remove leading and trailing spaces
-        song = parts[1].strip().rstrip(".mp3")      # Remove leading and trailing spaces
+        song = parts[1].strip().rstrip(".mp3.wav")      # Remove leading and trailing spaces
         if len(song) > 18:
-            trimmed_song = song[:15] + "..."
+            trimmed_song = song[:16] + "..."
         else:
             trimmed_song = song
         song = trimmed_song
@@ -392,9 +370,10 @@ def get_audio_length(file_name):
 
     return 0.0
 def convert_seconds_to_minutes_seconds(audio_length):
+    global minutes, seconds
     minutes = int(audio_length // 60)
-    remaining_seconds = int(audio_length % 60)
-    return f"{minutes:02d}:{remaining_seconds:02d}"
+    seconds = int(audio_length % 60)
+    return f"{minutes:02d}:{seconds:02d}"
 
 def display_file(artist, song):
     upl_box.resize(0, 0)
@@ -459,32 +438,64 @@ def finalise_upload():
     global paused_position, bar_x
     pause_audio()
     paused_position = 0
-    file_name_pathless = os.path.basename(file_name)
-    artist, song = get_song_info(file_name_pathless)
-    if len(song) > 13:
-        song = song[:11].rstrip() + "..."
-    if len(artist) > 20:
-        artist = artist[:18].rstrip() + "..."
-    song_name.setText(song)
-    artist_name.setText(artist)
+    set_name()
     load_cancel_button.resize(0, 0)
     load_done_button.resize(l_c_b_w, l_c_b_h)
     bar_x = 656
 
+def set_name():
+    file_name_pathless = os.path.basename(file_name)
+    artist, song = get_song_info_2(file_name_pathless)
+    song_name.setText(song)
+    
+    artist_name.setText(artist)
+
+def get_song_info_2(file_name):
+    parts = file_name.split("-")
+    if len(parts) >= 2:
+        artist = parts[0].strip()  # Remove leading and trailing spaces
+        adjusted_artist = artist + '   |   ' + f"{minutes:02d}:{seconds:02d}"
+        song = parts[1].strip().rstrip(".mp3.wav")      # Remove leading and trailing spaces
+        if len(song) > 18:
+            trimmed_song = song[:18] +'-'+ '\n' + song[18:]
+            song_y = 489 -67
+            song_h = 67*2
+            song_name.resize(song_w, song_h)
+            song_name.move(song_x, song_y)
+        else:
+            trimmed_song = song
+            song_y = 489
+            song_h = 67
+            song_name.resize(song_w, song_h)
+            song_name.move(song_x, song_y)
+        song = trimmed_song
+        artist = adjusted_artist
+        return artist, song
+    else:
+        # If the file name does not follow the expected format, return None for both song name and artist
+        return None, None
 
 def play_audio():
+    global first_play, k
+    
     try:
         if paused_position == 0:
-            media_content = QMediaContent(QUrl.fromLocalFile(selected_audio))
-            audio_player.setMedia(media_content)
+            pass
         else:
             audio_player.setPosition(paused_position)
+
+        if first_play:
+            # audio_player.pause()
+            k = 0
+            audio_player.setPosition(0)
+            audio_player.setVolume(50)
+            first_play = False
+        
         
         audio_player.play()
-        time.sleep(0.5)
         pause_button.resize(n_b_w, n_b_h)
         play_button.resize(0, 0)
-        audio_timer.start(interval)
+        audio_timer.start(interval_ms)
     except Exception:
         pass
 
@@ -497,8 +508,13 @@ def pause_audio():
     audio_timer.stop()
 
 def start_audio():
-    global paused_position, k, l, bar_x
+    global paused_position, k, l, bar_x, first_play
     try:
+        if first_play:
+            audio_player.pause()
+            audio_player.setPosition(0)
+            audio_player.setVolume(50)
+            first_play = False
         paused_position = 0
         audio_player.setPosition(paused_position)
         k = 0
@@ -508,12 +524,17 @@ def start_audio():
         print('what')
 
 def skip_audio():
-    global paused_position, k
+    global paused_position, k, first_play
     try:
+        if first_play:
+            audio_player.pause()
+            audio_player.setPosition(0)
+            audio_player.setVolume(50)
+            first_play = False
         paused_position = audio_player.position()
         paused_position = paused_position + 15000
         audio_player.setPosition(paused_position)
-        k = int(paused_position // interval)
+        k = int(paused_position // interval_ms)
     except Exception:
         print('what')
 
@@ -544,6 +565,7 @@ def update_loading():
     if  progress >= 60:
         progress = 0
         timer.stop()
+        auto_close_timer.start(3000)
         finalise_upload()
     progress += 1  # Update this value based on your needs
     
@@ -573,63 +595,7 @@ bar_x = 656
 scaled_height = 0
 tumour = 1
 def update_visualizer():
-    '''try:
-        global k, l, bar_x
-        bar_y = 534
-        bar_gap = 32
-        label_list = window.findChildren(QLabel, "bar_")
-        amplitude_data = amplitude_values[k]
-        scaled_height = 12 + (amplitude_data * 400)
-        scaled_height = int(scaled_height)
-        bar_y = 534 - (scaled_height/2)
-        label_list[l].move(bar_x, int(bar_y))
-        label_list[l].setFixedHeight(scaled_height)
-        bar_x += bar_gap
-        k += 1
-        l += 1
-        if l == 20:
-            l = 0
-            bar_x = 656
-    except IndexError:
-        audio_timer.stop()'''
-    '''try:
-        global k, l, bar_x, scaled_height, numer
-        bar_y = 540
-        bar_gap = 32
-        label_list = window.findChildren(QLabel, "bar_")
-        # height_from = label_list[0].height()
-        numer = 0
-        for label in label_list:
-            print(label_list[numer].height())
-            if label == label_list[0]:
-                print('label_1')
-            else:
-                print(numer, ' ', label_list[numer].height())
-                bar_x += bar_gap
-                label.setFixedHeight(label_list[numer].height())
-                bar_y = 540 - (label_list[numer].height()/2)
-                label.move(bar_x, int(bar_y))
-                numer += 1
-        try:            
-            if label_list[l] == label_list[0]:
-                pass
-            else:
-                print(k)
-                # print(numer)
-                print(l)
-                bar_x = label_list[l-1].x() + 32
-                amplitude_data = amplitude_values[k-1]
-                if k-numer < 0:
-                    pass
-                else:
-                    scaled_height = 12 + (amplitude_data * 400)
-                    scaled_height = int(scaled_height)
-                    bar_y = 540 - (scaled_height/2)
-                    label_list[l].move(bar_x, int(bar_y))
-                    label_list[l].setFixedHeight(scaled_height)
-        except Exception as e:
-            print(e)
-            print('what')'''
+       
     global k, l, bar_x, scaled_height, numer, tumour
     try:
         bar_y = 540
@@ -640,7 +606,12 @@ def update_visualizer():
         bar_x = 656
         for i in range(0, tumour):
             amplitude_data = amplitude_values[k-numer]
-            scaled_height = 12 + (amplitude_data * 400)
+            try:
+                h_height = vis_height_box.text()
+                height = int(h_height)
+            except Exception:
+                height = 400
+            scaled_height = 12 + (amplitude_data * height)
             scaled_height = int(scaled_height)
             bar_y = 540 - (scaled_height/2)
             label_list[l].move(bar_x, int(bar_y))
@@ -656,37 +627,20 @@ def update_visualizer():
             l = 0
             bar_x = 656
     except IndexError:
-        print('what')
-        audio_timer.stop()
-    '''
-    global k, l, bar_x, scaled_height, numer, tumour
-    try:
-        bar_y = 540
-        bar_gap = 32
-        label_list = window.findChildren(QLabel, "bar_")
-        l = 0
-        numer = 0
         bar_x = 656
-        for i in range(0, tumour):
-            amplitude_data = amplitude_envelopes[k-numer]
-            scaled_height = 12 + (amplitude_data * 400)
-            scaled_height = int(scaled_height)
-            bar_y = 540 - (scaled_height/2)
-            label_list[l].move(bar_x, int(bar_y))
-            label_list[l].setFixedHeight(scaled_height)
+        all_done = 0
+        for label in label_list:
+            
+            if label.height() > 12:
+                reduced_height = label.height() - 1
+                bar_y = 540 - (reduced_height/2)
+                label.move(bar_x, int(bar_y))
+                label.setFixedHeight(reduced_height)
+            else:
+                all_done += 1
             bar_x += bar_gap
-            l += 1
-            numer += 1
-
-        if tumour != 20:
-            tumour += 1    
-        k += 1
-        if l == 20:
-            l = 0
-            bar_x = 656
-    except IndexError:
-        print('what')
-        audio_timer.stop()'''
+            if all_done == 20:  
+                audio_timer.stop()
     
     
 
@@ -695,6 +649,31 @@ def get_amplitudes(file_path):
     audio_analyzer_thread = AudioAnalyzerThread()
     
     audio_analyzer_thread.start()
+
+
+def open_vis_settings():
+    if vis_setting_menu.width() > 0:
+        vis_setting_menu.resize(0, 0)
+        vis_setting_title.resize(0, 0)
+        vis_height_sub.resize(0, 0)
+        vis_height_box.resize(0, 0)
+        vis_interval_sub.resize(0, 0)
+        vis_interval_box.resize(0, 0)
+        vis_volume_sub.resize(0, 0)
+        vol_slider.resize(0, 0)
+    else:
+        vis_setting_menu.resize(v_s_m_w, v_s_m_h)
+        vis_setting_title.resize(v_s_t_w, v_s_t_h)
+        vis_height_sub.resize(v_s_m_s_w, v_s_m_s_h)
+        vis_height_box.resize(v_s_m_b_w, v_s_m_b_h)
+        vis_interval_sub.resize(v_s_m_s_w, v_s_m_s_h)
+        vis_interval_box.resize(v_s_m_b_w, v_s_m_b_h)
+        vis_volume_sub.resize(v_s_m_s_w, v_s_m_s_h)
+        vol_slider.resize(v_s_m_b_w, v_s_m_b_h)
+
+def update_volume():
+    volume = vol_slider.value()
+    audio_player.setVolume(volume)
     
     
 
@@ -772,7 +751,7 @@ if __name__ == '__main__':
     gear_2 = gear.scaled(24,24)
     setting_button.setPixmap(gear_2)
     setting_button.setAlignment(Qt.AlignCenter)
-    # setting_button.clicked.connect(window.close)
+    setting_button.clicked.connect(open_vis_settings)
     setting_button.setToolTip('Settings')
 
     # add the import button
@@ -881,11 +860,11 @@ if __name__ == '__main__':
     # variables
     song_x = 56
     song_y = 489
-    song_w = 404
+    song_w = 700
     song_h = 67
     artist_x = 56
     artist_y = 564
-    artist_w = 310
+    artist_w = 800
     artist_h = 27
     song_name = QLabel('Song name', window)
     song_name.setObjectName('song_name')
@@ -1190,6 +1169,9 @@ if __name__ == '__main__':
     audio_timer = QTimer()
     audio_timer.timeout.connect(update_visualizer)
 
+    auto_close_timer = QTimer()
+    auto_close_timer.timeout.connect(close_upload_menu)
+
     l_c_b_x = 829
     l_c_b_y = 790
     l_c_b_w = 262
@@ -1211,6 +1193,78 @@ if __name__ == '__main__':
     load_done_button.setAlignment(Qt.AlignCenter)
     load_done_button.clicked.connect(close_upload_menu)
     
+    v_s_m_h = 232
+    v_s_m_w = 267
+    v_s_m_x = 56 
+    v_s_m_y = 116
+    v_s_t_h = 40
+    v_s_t_w = 115
+    v_s_t_y = 136
+    v_s_m_s_h = 27
+    v_s_m_s_w = 67
+    v_s_m_l_x = 76
+    v_s_m_r_x = 175
+    v_s_m_b_h = 35
+    v_s_m_b_w = 128
+    v_s_h_s_y = 195
+    v_s_h_b_y = 191
+    v_s_i_s_y = 246
+    v_s_i_b_y = 242
+    v_s_v_s_y = 297
+    v_s_v_b_y = 293
+
+
+    vis_setting_menu = QLabel(window)
+    vis_setting_menu.setObjectName('vis_setting_menu')
+    vis_setting_menu.move(v_s_m_x, v_s_m_y)
+    vis_setting_menu.resize(0, 0)
+
+    vis_setting_title = QLabel('Settings', window)
+    vis_setting_title.setObjectName('vis_setting_title')
+    vis_setting_title.move(v_s_m_l_x, v_s_t_y)
+    vis_setting_title.resize(0, 0)
+    vis_setting_title.setAlignment(Qt.AlignLeft)
+
+    vis_height_sub = QLabel('Height', window)
+    vis_height_sub.setObjectName('vis_setting_subtitle')
+    vis_height_sub.move(v_s_m_l_x, v_s_h_s_y)
+    vis_height_sub.resize(0, 0)
+    vis_height_sub.setAlignment(Qt.AlignLeft)
+
+    vis_height_box = QLineEdit(window)
+    vis_height_box.setObjectName('vis_setting_editbox')
+    vis_height_box.move(v_s_m_r_x, v_s_h_b_y)
+    vis_height_box.resize(0, 0)
+    vis_height_box.setPlaceholderText(' 400')
+
+    vis_interval_sub = QLabel('Interval', window)
+    vis_interval_sub.setObjectName('vis_setting_subtitle')
+    vis_interval_sub.move(v_s_m_l_x, v_s_i_s_y)
+    vis_interval_sub.resize(0, 0)
+    vis_interval_sub.setAlignment(Qt.AlignLeft)
+
+    vis_interval_box = QLineEdit(window)
+    vis_interval_box.setObjectName('vis_setting_editbox')
+    vis_interval_box.move(v_s_m_r_x, v_s_i_b_y)
+    vis_interval_box.resize(0, 0)
+    vis_interval_box.setPlaceholderText(' 10')
+
+    vis_volume_sub = QLabel('Volume', window)
+    vis_volume_sub.setObjectName('vis_setting_subtitle')
+    vis_volume_sub.move(v_s_m_l_x, v_s_v_s_y)
+    vis_volume_sub.resize(0, 0)
+    vis_volume_sub.setAlignment(Qt.AlignLeft)
+
+    # Create a horizontal slider
+    vol_slider = QSlider(window)
+    vol_slider.setOrientation(1)  # Set the orientation to horizontal
+    vol_slider.setMinimum(0)      # Set the minimum value
+    vol_slider.setMaximum(100)    # Set the maximum value
+    vol_slider.setTickInterval(10)  # Set the interval between ticks
+    vol_slider.valueChanged.connect(update_volume)  # Connect the valueChanged signal
+    vol_slider.move(v_s_m_r_x, v_s_v_b_y)
+    vol_slider.resize(0, 0)
+    vol_slider.setValue(50)
 
     # Load the external stylesheet
     with open('sheets/stylesheet.qss', 'r') as file:
